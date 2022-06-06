@@ -1,0 +1,363 @@
+:root {
+  --color-brand--1: #ffb545;
+  --color-brand--2: #00c46a;
+
+  --color-dark--1: #2d3439;
+  --color-dark--2: #42484d;
+  --color-light--1: #aaa;
+  --color-light--2: #ececec;
+  --color-light--3: rgb(214, 222, 224);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: inherit;
+}
+
+html {
+  font-size: 62.5%;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Manrope', sans-serif;
+  color: var(--color-light--2);
+  font-weight: 400;
+  line-height: 1.6;
+  height: 100vh;
+  overscroll-behavior-y: none;
+
+  background-color: #fff;
+  padding: 2.5rem;
+
+  display: flex;
+}
+
+/* SIDEBAR */
+.sidebar {
+  flex-basis: 50rem;
+  background-color: var(--color-dark--1);
+  padding: 3rem 5rem 4rem 5rem;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.logo {
+  height: 5.2rem;
+  align-self: center;
+  margin-bottom: 4rem;
+}
+
+.workouts {
+  list-style: none;
+  height: 77vh;
+  overflow-y: scroll;
+  overflow-x: hidden;
+  position: relative;
+}
+
+.workouts::-webkit-scrollbar {
+  width: 0;
+}
+
+.workout {
+  background-color: var(--color-dark--2);
+  border-radius: 5px;
+  padding: 1.5rem 2.25rem;
+  margin-bottom: 1.75rem;
+  cursor: pointer;
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 0.75rem 1.5rem;
+  transition: all 0.2s;
+}
+
+.workout--running {
+  border-left: 5px solid var(--color-brand--2);
+}
+.workout--cycling {
+  border-left: 5px solid var(--color-brand--1);
+}
+
+.workout__title {
+  font-size: 1.7rem;
+  font-weight: 600;
+  grid-column: 1 / -1;
+}
+
+.workout__details {
+  display: flex;
+  align-items: baseline;
+}
+
+.workout__icon {
+  font-size: 1.8rem;
+  margin-right: 0.2rem;
+  height: 0.28rem;
+}
+
+.workout__value {
+  font-size: 1.5rem;
+  margin-right: 0.5rem;
+}
+
+.workout__unit {
+  font-size: 1.1rem;
+  color: var(--color-light--1);
+  text-transform: uppercase;
+  font-weight: 800;
+}
+
+.workout__edit {
+  position: absolute;
+  top: -23px;
+  right: 7px;
+  font-size: 38px;
+  transition: color 0.2s;
+}
+.workout__edit:hover{
+  color: var(--color-dark--1);
+}
+
+.workout__popup{
+    font-size: 15px;
+    background: #2d3439;
+    color: #d7d9da;
+    position: absolute;
+    top: 0px;
+    right: -100px;
+    padding: 23px;
+    border-radius: 5px;
+    z-index: 999;
+    transition: all 0.4s;
+}
+
+.workout__popup p{
+  transition: all 0.2s;
+}
+
+
+.workout__popup p:hover{
+  color: #42484d;
+}
+
+.workout__close{
+  position: absolute;
+    top: -11px;
+    right: 0;
+    font-size: 20px;
+
+}
+
+.display-none {
+  display: none;
+}
+
+.hidden-workouts{
+  opacity: 0;
+  z-index: -1;
+}
+
+.form {
+  background-color: var(--color-dark--2);
+  border-radius: 5px;
+  padding: 1.5rem 2.75rem;
+  margin-bottom: 1.75rem;
+
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem 2.5rem;
+
+  /* Match height and activity boxes */
+  height: 10.70rem;
+  transition: all 0.5s, transform 1ms;
+  position: relative;
+  
+}
+
+.invalid-input {
+  border: 3px solid orangered;
+  padding: 1.2rem 2.45rem;
+}
+
+.form.invalid-input::after {
+    content: "Invalid Input!";
+    color: orangered;
+    font-weight: 700;
+    position: absolute;
+    left: 25px;
+    bottom: 0px;
+    font-size: 1.5rem;
+}
+
+
+/* EDITAR */
+.form__edit.form-label {
+  text-align: -webkit-center;
+}
+
+.form.hidden {
+  transform: translateY(-30rem);
+  height: 0;
+  padding: 0 2.25rem;
+  margin-bottom: 0;
+  opacity: 0;
+}
+
+.form__row {
+  display: flex;
+  align-items: center;
+}
+
+.form__row--hidden {
+  display: none;
+}
+
+.form__label {
+  flex: 0 0 50%;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.form__input {
+  width: 100%;
+  padding: 0.3rem 1.1rem;
+  font-family: inherit;
+  font-size: 1.4rem;
+  border: none;
+  border-radius: 3px;
+  background-color: var(--color-light--3);
+  transition: all 0.2s;
+}
+
+.form__input:focus {
+  outline: none;
+  background-color: #fff;
+}
+
+/* FAZER UMA CLASSE PARA TODOS OS BUTTONS */
+.form__btn {
+  cursor: pointer;
+  color: #dfe0e1;
+  font-weight: 600;
+  border-radius: 5px;
+  border: none;
+  background: #5c5f62;
+  padding: 5px;
+  transition: all 0.2s;
+  margin-left: 6px;
+}
+.form__btn-cancel {
+  width: 60px;
+}
+.form__btn-ok {
+  width: 50px;
+}
+
+.form__btn:hover{
+  background: #373c40;
+}
+
+.form div:last-child {
+  justify-self: end;
+  grid-column-start: 2;
+}
+
+.copyright {
+  margin-top: auto;
+  font-size: 1.3rem;
+  text-align: center;
+  color: #2d3439;
+  position: absolute;
+  left:  50%;
+  transform:  translate(-50%, 0);
+  bottom: 0;
+  width: 100%;
+}
+
+/* MAP */
+#map {
+  flex: 1;
+  height: 100%;
+  background-color: var(--color-light--1);
+}
+
+/* Popup width is defined in JS using options */
+.leaflet-popup .leaflet-popup-content-wrapper {
+  background-color: var(--color-dark--1);
+  color: var(--color-light--2);
+  border-radius: 5px;
+  padding-right: 0.6rem;
+}
+
+.leaflet-popup .leaflet-popup-content {
+  font-size: 1.5rem;
+}
+
+.leaflet-popup .leaflet-popup-tip {
+  background-color: var(--color-dark--1);
+}
+
+.running-popup .leaflet-popup-content-wrapper {
+  border-left: 5px solid var(--color-brand--2);
+}
+.cycling-popup .leaflet-popup-content-wrapper {
+  border-left: 5px solid var(--color-brand--1);
+}
+
+.leaflet-draw-actions a {
+  background-color: #2d3439;
+  color: #ffffff;
+}
+
+.buttons {
+  font-weight: 800;
+  font-size: 1.3rem;
+  bottom: 8px;
+  left: 39px;
+  position: absolute;
+}
+
+.buttons select {
+    border-radius: 5px;
+    background: #42484d;
+    color: #dfe0e1;
+    cursor: pointer;
+    border: none;
+    padding: 3px;
+}
+
+.buttons .delete-btn {
+  width: 75px;
+  padding: 4px;
+  border-radius: 5px;
+  background: #bd4747;
+  color: #dfe0e1;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  margin: 0 10px;
+  transition: all 0.4s;
+}
+
+.buttons .sort-btn {
+  padding: 4px 8px;
+  border-radius: 5px;
+  background: #42484d;
+  color: #dfe0e1;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.4s;
+}
+
+.buttons .delete-btn:hover {
+  background-color: #dd3232;
+}
+.buttons button:hover {
+  background: #31363a;
+
+}
