@@ -78,7 +78,8 @@ class App {
   #currentForm;
   #lastWorkoutClicked;
   #sortedAsc;
-  #drawlines = [];
+  #drawlayers = [];
+  #drawnItems = new L.FeatureGroup();
 
   constructor() {
     // Get user's position
@@ -287,6 +288,9 @@ class App {
   get workouts() {
     return this.#workouts;
   }
+  get drawlayers(){
+    return this.#drawlayers;
+  }
 
   _loadMap(position) {
     const { latitude } = position.coords;
@@ -320,22 +324,20 @@ class App {
           );
 
     // LEAFTLET DRAW
-    const data = JSON.parse(localStorage.getItem('drawlines'));
-    if (data) data.forEach(d => this.#drawlines.push(d));
-
-    const drawnItems = new L.FeatureGroup();
+    const data = JSON.parse(localStorage.getItem('drawlayers'));
+    if (data) data.forEach(d => this.#drawlayers.push(d));
 
     L.geoJson(data, {
       onEachFeature: function (feature, layer) {
-        drawnItems.addLayer(layer);
-      },
+        this.#drawnItems.addLayer(layer);
+      }.bind(this),
       style: function (feature) {
         return drawOptions.shapeOptions;
       },
     });
 
     this.#map = L.map('map').setView(coords, this.#mapZoomLevel);
-    this.#map.addLayer(drawnItems);
+    this.#map.addLayer(this.#drawnItems);
 
     L.control
       .layers(
@@ -350,7 +352,7 @@ class App {
 
     const drawControl = new L.Control.Draw({
       edit: {
-        featureGroup: drawnItems,
+        featureGroup: this.#drawnItems,
         edit: true,
       },
       draw: {
@@ -375,36 +377,41 @@ class App {
       );
 
 
-    this.#map.on('draw:drawstart', (e) => {
-      this.#currentForm = 'toolbarClicked'
-    });
-    this.#map.on('draw:drawstop', (e) => {
+    // this.#map.on('draw:drawstart', (e) => {
+    //   this.#currentForm = 'toolbarClicked'
+    // });
+    // this.#map.on('draw:drawstop', (e) => {
       
-        this.#currentForm = undefined
-    });
-    this.#map.on('draw:editstart', () => (this.#currentForm = 'toolbarClicked'));
-    this.#map.on('draw:editstop ', () => (this.#currentForm = undefined));
-    this.#map.on('draw:deletestart', () => (this.#currentForm = 'toolbarClicked'));
-    this.#map.on('draw:deletestop', () => (this.#currentForm = undefined));
+    //     this.#currentForm = undefined
+    // });
+    // this.#map.on('draw:editstart', () => (this.#currentForm = 'toolbarClicked'));
+    // this.#map.on('draw:editstop ', () => (this.#currentForm = undefined));
+    // this.#map.on('draw:deletestart', () => (this.#currentForm = 'toolbarClicked'));
+    // this.#map.on('draw:deletestop', () => (this.#currentForm = undefined));
 
     this.#map.on(
       L.Draw.Event.CREATED,
       function (event) {
         const layer = event.layer;
-        drawnItems.addLayer(layer);
+        this.#mapEvent = event;
+        this.#drawnItems.addLayer(layer);
+
+        console.log(this.#drawnItems.getLayerId(layer))
 
         if(event.layerType === "marker"){
           console.log(event.layer.getLatLng())
-          this.#mapEvent = event;
           this.#currentForm = 'newWorkout';
           this._hidePopups();
           this._showForm();
         }
-          
-        const layerJSON = layer.toGeoJSON();
-        layerJSON.id = (Date.now() + '').slice(-10);
-        this.#drawlines.push(layerJSON);
-        localStorage.setItem('drawlines', JSON.stringify(this.#drawlines));
+
+        if(event.layerType !== "marker"){
+          const layerJSON = layer.toGeoJSON();
+          layerJSON.id = (Date.now() + '').slice(-10);
+          this.#drawlayers.push(layerJSON);
+          this._setLocalStorageDrawlayer();
+        }
+
       }.bind(this)
     );
 
@@ -414,14 +421,14 @@ class App {
         const layers = event.layers;
         layers.eachLayer(
           function (layer) {
-            drawnItems.addLayer(layer);
+            this.#drawnItems.addLayer(layer);
             const layerJSON = layer.toGeoJSON();
-            const indexLayer = this.#drawlines.findIndex(
+            const indexLayer = this.#drawlayers.findIndex(
               l => l.id === layerJSON.id
             );
-            this.#drawlines[indexLayer] = layerJSON;
+            this.#drawlayers[indexLayer] = layerJSON;
 
-            localStorage.setItem('drawlines', JSON.stringify(this.#drawlines));
+            localStorage.setItem('drawlayers', JSON.stringify(this.#drawlayers));
           }.bind(this)
         );
       }.bind(this)
@@ -434,11 +441,11 @@ class App {
         layers.eachLayer(
           function (layer) {
             const layerJSON = layer.toGeoJSON();
-            this.#drawlines.splice(
-              this.#drawlines.findIndex(d => d.id === layerJSON.id),
+            this.#drawlayers.splice(
+              this.#drawlayers.findIndex(d => d.id === layerJSON.id),
               1
             );
-            localStorage.setItem('drawlines', JSON.stringify(this.#drawlines));
+            localStorage.setItem('drawlayers', JSON.stringify(this.#drawlayers));
           }.bind(this)
         );
       }.bind(this)
@@ -465,6 +472,8 @@ class App {
     // Get data from local storage
     this._getLocalStorage();
   }
+
+
 
   _showForm() {
     form.classList.remove('hidden');
@@ -571,9 +580,21 @@ class App {
       // Render workout on list
       this._insertWorkout(form, 'afterend', workout);
 
+      const layerJSON = this.#mapEvent.layer.toGeoJSON();
+      layerJSON.id = workout.id;
+      this.#drawlayers.push(layerJSON);
+
       // Set local storage to all workouts
-      this._setLocalStorage();
+      this._setLocalStorageWorkout();
+      this._setLocalStorageDrawlayer();
+
     }
+
+    if (e.submitter.classList.contains('form__btn-cancel')){
+      this.#drawnItems.removeLayer(this.#mapEvent.layer);
+    }
+
+
 
     // Hide form + clear input fields
     this._hideForm();
@@ -688,8 +709,11 @@ class App {
     });
   }
 
-  _setLocalStorage() {
+  _setLocalStorageWorkout() {
     localStorage.setItem('workouts', JSON.stringify(this.#workouts));
+  }
+  _setLocalStorageDrawlayer() {
+    localStorage.setItem('drawlayers', JSON.stringify(this.#drawlayers));
   }
 
   _getLocalStorage() {
@@ -705,8 +729,22 @@ class App {
 
   reset() {
     localStorage.removeItem('workouts');
-    localStorage.removeItem('drawlines');
+    localStorage.removeItem('drawlayers');
     location.reload();
+  }
+
+
+  removeLayer(id){
+    this.#drawnItems.removeLayer(id);
+  }
+
+  eachLayer(){
+    this.#drawnItems.eachLayer(function(l){
+      console.log(this.#drawnItems.getLayerId(l))
+    })
+  }
+  get drawnitems(){
+    return this.#drawnItems;
   }
 }
 
