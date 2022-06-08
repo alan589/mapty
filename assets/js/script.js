@@ -6,11 +6,11 @@ class Workout {
   point;
 
   constructor(distance, duration, point) {
-    // this.date = ...
-    // this.id = ...
-    // this.coords = coords; // [lat, lng]
     this.distance = distance; // in km
     this.duration = duration; // in min
+    // const pointJSON = point.toGeoJSON();
+    // pointJSON.id = this.#drawnItems.getLayerId(point);
+
     this.point = point;
   }
 
@@ -47,7 +47,6 @@ class Cycling extends Workout {
   constructor(distance, duration, elevationGain, point) {
     super(distance, duration, point);
     this.elevationGain = elevationGain;
-    // this.type = 'cycling';
     this.calcSpeed();
     this._setDescription();
   }
@@ -234,7 +233,6 @@ class App {
           const layer = this.#drawnItems.getLayer(this.#workouts[workoutIndex].point.id)
           layer.closePopup();
           this._renderWorkoutMarker(layer, this.#workouts[workoutIndex]);
-          this._setLocalStorageWorkout();
 
         } else {
           workoutObj.distance = +inputDistance.value;
@@ -248,6 +246,8 @@ class App {
             workoutObj.calcSpeed();
           }
         }
+
+        this._setLocalStorageWorkout();
 
         this._insertWorkout(
           this.#lastWorkoutClicked,
@@ -293,13 +293,6 @@ class App {
     // this._loadMap({})
   }
 
-  get workouts() {
-    return this.#workouts;
-  }
-  get drawlayers(){
-    return this.#drawlayers;
-  }
-
   _loadMap(position) {
     const { latitude } = position.coords;
     const { longitude } = position.coords;
@@ -332,17 +325,17 @@ class App {
           );
 
     // LEAFTLET DRAW
-    const data = JSON.parse(localStorage.getItem('drawlayers'));
-    if (data) data.forEach(d => this.#drawlayers.push(d));
+    // const data = JSON.parse(localStorage.getItem('drawlayers'));
+    // if (data) data.forEach(d => this.#drawlayers.push(d));
 
-    L.geoJson(data, {
-      onEachFeature: function (feature, layer) {
-        this.#drawnItems.addLayer(layer);
-      }.bind(this),
-      style: function (feature) {
-        return drawOptions.shapeOptions;
-      },
-    });
+    // L.geoJson(data, {
+    //   onEachFeature: function (feature, layer) {
+    //     this.#drawnItems.addLayer(layer);
+    //   }.bind(this),
+    //   style: function (feature) {
+    //     return drawOptions.shapeOptions;
+    //   },
+    // });
 
     this.#map = L.map('map').setView(coords, this.#mapZoomLevel);
     this.#map.addLayer(this.#drawnItems);
@@ -379,19 +372,6 @@ class App {
         'afterbegin',
         `<label><div><span>Maps</span></div></label>`
       );
-
-
-    // this.#map.on('draw:drawstart', (e) => {
-    //   this.#currentForm = 'toolbarClicked'
-    // });
-    // this.#map.on('draw:drawstop', (e) => {
-      
-    //     this.#currentForm = undefined
-    // });
-    // this.#map.on('draw:editstart', () => (this.#currentForm = 'toolbarClicked'));
-    // this.#map.on('draw:editstop ', () => (this.#currentForm = undefined));
-    // this.#map.on('draw:deletestart', () => (this.#currentForm = 'toolbarClicked'));
-    // this.#map.on('draw:deletestop', () => (this.#currentForm = undefined));
 
     this.#map.on(
       L.Draw.Event.CREATED,
@@ -457,39 +437,31 @@ class App {
         layers.eachLayer(
           function (layer) {
             const layerJSON = layer.toGeoJSON();
-            this.#drawlayers.splice(
-              this.#drawlayers.findIndex(d => d.id === layerJSON.id),
-              1
-            );
-            localStorage.setItem('drawlayers', JSON.stringify(this.#drawlayers));
+            const layerID = this.#drawnItems.getLayerId(layer);
+
+            if(layerJSON.geometry.type === 'Point'){
+              const workout = this.#workouts.find(w => w.point.id === layerID)
+              const workoutList = Array.from(document.querySelectorAll('.workouts li')); 
+              const workoutEl = workoutList.find(l => l.dataset.id === workout.id)
+              const workoutIndex = this.#workouts.findIndex(w => w.id === workoutEl.dataset.id);
+              this.#workouts.splice(workoutIndex, 1);
+              workoutEl.remove();
+              this._setLocalStorageWorkout();
+            }
+            else{
+              const drawIndex = this.#drawlayers.findIndex(d => d.id === layerID);
+              this.#drawlayers.splice(drawIndex, 1); 
+              this._setLocalStorageDrawlayer();
+            }
+
           }.bind(this)
         );
       }.bind(this)
     );
 
-    // Handling clicks on map
-    // this.#map.on(
-    //   'click',
-    //   function (e) {
-    //     if (
-    //       !(
-    //         this.#currentForm === 'editWorkout' ||
-    //         this.#currentForm === 'toolbarClicked'
-    //       )
-    //     ) {
-    //       this.#mapEvent = e;
-    //       this.#currentForm = 'newWorkout';
-    //       this._hidePopups();
-    //       this._showForm();
-    //     }
-    //   }.bind(this)
-    // );
-
     // Get data from local storage
-    this._getLocalStorage();
+    this._getLocalStorageWorkouts();
   }
-
-
 
   _showForm() {
     form.classList.remove('hidden');
@@ -563,18 +535,13 @@ class App {
     if (e.submitter.classList.contains('form__btn-ok')) {
       let workout;
 
-
-
       // If workout running, create running object
 
       if (!this._validInputs()) {
         return;
       }
 
-
       const pointJSON = this.#mapEvent.layer.toGeoJSON();
-      pointJSON.id = this.#drawnItems.getLayerId(this.#mapEvent.layer);
-      
 
       if (inputType.value === 'running')
         workout = new Running(
@@ -619,6 +586,7 @@ class App {
     this._hideForm();
   }
 
+
   _renderWorkoutMarker(layer, workout){
             layer.bindPopup(
             L.popup({
@@ -650,14 +618,14 @@ class App {
         <span class="workout__edit">...</span>
         <h2 class="workout__title">${workout.description}</h2>
         <div class="workout__details">
-          <!-- <span class="workout__icon">${
+           <span class="workout__icon">${
             workout.type === 'running' ? '🏃‍♂️' : '🚴‍♀️'
-          }</span> -->
+          }</span> 
           <span class="workout__value">${workout.distance}</span>
           <span class="workout__unit">km</span>
         </div>
         <div class="workout__details">
-          <!-- <span class="workout__icon">⏱</span> -->
+          <span class="workout__icon">⏱</span>
           <span class="workout__value">${workout.duration}</span>
           <span class="workout__unit">min</span>
         </div>
@@ -666,12 +634,12 @@ class App {
     if (workout.type === 'running')
       html += `
         <div class="workout__details">
-          <!-- <span class="workout__icon">⚡️</span> -->
+           <span class="workout__icon">⚡️</span> 
           <span class="workout__value">${workout.pace.toFixed(1)}</span>
           <span class="workout__unit">min/km</span>
         </div>
         <div class="workout__details">
-          <!-- <span class="workout__icon">🦶🏼</span> -->
+           <span class="workout__icon">🦶🏼</span> 
           <span class="workout__value">${workout.cadence}</span>
           <span class="workout__unit">spm</span>
         </div>
@@ -681,12 +649,12 @@ class App {
     if (workout.type === 'cycling')
       html += `
         <div class="workout__details">
-          <!-- <span class="workout__icon">⚡️</span> -->
+           <span class="workout__icon">⚡️</span> 
           <span class="workout__value">${workout.speed.toFixed(1)}</span>
           <span class="workout__unit">km/h</span>
         </div>
         <div class="workout__details">
-          <!-- <span class="workout__icon">⛰</span> -->
+          <span class="workout__icon">⛰</span>
           <span class="workout__value">${workout.elevationGain}</span>
           <span class="workout__unit">m</span>
         </div>
@@ -716,16 +684,54 @@ class App {
     localStorage.setItem('drawlayers', JSON.stringify(this.#drawlayers));
   }
 
-  _getLocalStorage() {
-    const data = JSON.parse(localStorage.getItem('workouts'));
-    if (!data) return;
+  _getLocalStorageWorkouts() {
+    const workoutsData = JSON.parse(localStorage.getItem('workouts'));
+    // const drawlayersData = JSON.parse(localStorage.getItem('drawlayers'));
+    let workout;
+    let pointLayer;
+    let layerID;
+    if (!workoutsData) return;
 
-    this.#workouts = data;
-    console.log(data)
+    console.log('workout', workoutsData);
 
-    // this.#workouts.forEach(work => {
-    //   this._renderWorkoutMarker(work);
-    // });
+
+    workoutsData.forEach(work => {
+      
+      L.geoJson(work.point, {
+        onEachFeature: function (feature, layer) {
+          pointLayer = layer;
+          this.#drawnItems.addLayer(layer);
+          layerID = this.#drawnItems.getLayerId(layer);
+        }.bind(this),
+        style: function (feature) {
+          return drawOptions.shapeOptions;
+        },
+      });
+
+      work.point.id = layerID;
+      if (work.type === 'running')
+        workout = new Running(
+          work.distance,
+          work.duration,
+          work.cadence,
+          work.point
+          );
+
+      if (work.type === 'cycling')
+        workout = new Cycling(
+          work.distance,
+          work.duration,
+          work.elevationGain,
+          work.point
+          );
+      this.#workouts.push(workout);
+      this._renderWorkoutMarker(pointLayer, workout);
+      this._insertWorkout(form, 'afterend', workout);
+
+
+      
+      // this._setLocalStorageWorkout();
+    });
   }
 
   reset() {
@@ -734,22 +740,27 @@ class App {
     location.reload();
   }
 
-
   removeLayer(id){
     this.#drawnItems.removeLayer(id);
   }
 
-  eachLayer(){
+  eachLayerId(){
     this.#drawnItems.eachLayer(function(l){
       console.log(this.#drawnItems.getLayerId(l))
     })
   }
+
   get drawnitems(){
     return this.#drawnItems;
   }
-
-  get layerIDS(){
+  get layerIds(){
     return this.#drawnItems.getLayers();
+  }
+  get workouts() {
+    return this.#workouts;
+  }
+  get drawlayers(){
+    return this.#drawlayers;
   }
 }
 
