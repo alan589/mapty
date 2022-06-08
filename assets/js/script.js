@@ -347,28 +347,24 @@ class App {
     this.#map = L.map('map').setView(coords, this.#mapZoomLevel);
     this.#map.addLayer(this.#drawnItems);
 
-    L.control
-      .layers(
+    L.control.layers(
         {
-          google: google.addTo(this.#map),
-          osm: osm.addTo(this.#map)
-        },
-        {},
-        { position: 'topright', collapsed: false }
-      )
-      .addTo(this.#map);
+          "google": google,
+          "osm": osm.addTo(this.#map)
+        },{},
+        { position: 'topright', collapsed: true }
+      ).addTo(this.#map);
 
     const drawControl = new L.Control.Draw({
       edit: {
         featureGroup: this.#drawnItems,
-        edit: true,
       },
       draw: {
+        circle: false,
         polyline: drawOptions,
         polygon: drawOptions,
         rectangle: drawOptions,
-        marker: true,
-        circle: false
+        
       },
     });
 
@@ -578,6 +574,7 @@ class App {
 
       const pointJSON = this.#mapEvent.layer.toGeoJSON();
       pointJSON.id = this.#drawnItems.getLayerId(this.#mapEvent.layer);
+      
 
       if (inputType.value === 'running')
         workout = new Running(
