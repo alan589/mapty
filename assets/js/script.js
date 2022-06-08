@@ -8,9 +8,6 @@ class Workout {
   constructor(distance, duration, point) {
     this.distance = distance; // in km
     this.duration = duration; // in min
-    // const pointJSON = point.toGeoJSON();
-    // pointJSON.id = this.#drawnItems.getLayerId(point);
-
     this.point = point;
   }
 
@@ -727,9 +724,6 @@ class App {
       this.#workouts.push(workout);
       this._renderWorkoutMarker(pointLayer, workout);
       this._insertWorkout(form, 'afterend', workout);
-
-
-      
       // this._setLocalStorageWorkout();
     });
   }
