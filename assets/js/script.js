@@ -731,6 +731,9 @@ class App {
       this.#workouts.push(workout);
       this._renderWorkoutMarker(pointLayer, workout);
       this._insertWorkout(form, 'afterend', workout);
+
+
+      
       // this._setLocalStorageWorkout();
     });
   }
