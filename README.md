@@ -37,7 +37,7 @@ A aplicação consiste em mapear exercícios através de um mapa interativo
 
 ### Useful Resources
 - [Leaflet](https://leafletjs.com/) - an open-source JavaScript library for mobile-friendly interactive maps
-- [Leaflet Draw](https://leaflet.github.io/Leaflet.draw/docs/leaflet-draw-latest.html) - Plugin do Leaflet, me ajudou a desenhar formas geométricas no mapa
+- [Leaflet Draw](https://leaflet.github.io/Leaflet.draw/docs/leaflet-draw-latest.html) - Leaflet's plugin, helped me to drawing geometric shapes on the map
 
 ## Author
 
