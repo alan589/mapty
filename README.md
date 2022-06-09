@@ -24,16 +24,16 @@ A aplicação consiste em mapear exercícios através de um mapa interativo
 - [Leaflet](https://leafletjs.com/) - JS library
 
 ### Working on the following features :hammer_and_wrench: <br>
-:heavy_check_mark: Ability to edit a workout <br>
-:heavy_check_mark: Ability to delete a workout <br>
-:heavy_check_mark: Ability to delete all workouts <br> 
-:heavy_check_mark: Ability to sort workouts by a certain field (e.g. distance)<br>
-:heavy_check_mark: Re-build Running and Cycling objects coming from Local Storage<br>
-:white_medium_square:	More realistic error and confirmation messages<br>
-:white_medium_square:	 Ability to position the map to show all workouts<br>
-:heavy_check_mark: Ability to draw lines and shapes instead of just points <br>
-:white_medium_square:	 Geocode location from coordinates ("Run in Faro, Portugal")<br>
-:white_medium_square:	 Display weather data for workout time and place <br>
+- [x] Ability to edit a workout <br>
+- [x] Ability to delete a workout <br>
+- [x] Ability to delete all workouts <br> 
+- [x] Ability to sort workouts by a certain field (e.g. distance)<br>
+- [x] Re-build Running and Cycling objects coming from Local Storage<br>
+- [ ]	More realistic error and confirmation messages<br>
+- [ ]	Ability to position the map to show all workouts<br>
+- [x] Ability to draw lines and shapes instead of just points <br>
+- [ ]	Geocode location from coordinates ("Run in Faro, Portugal")<br>
+- [ ]	Display weather data for workout time and place <br>
 
 ### Useful Resources
 - [Leaflet](https://leafletjs.com/) - an open-source JavaScript library for mobile-friendly interactive maps
