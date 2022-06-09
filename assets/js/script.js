@@ -740,7 +740,7 @@ class App {
         }.bind(this),
         style: function (feature) {
           return this.#drawOptions.shapeOptions;
-        },
+        }.bind(this),
       });
     });
   }
