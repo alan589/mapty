@@ -29,7 +29,7 @@ A aplicação consiste em mapear exercícios através de um mapa interativo
 - [x] Ability to delete all workouts <br> 
 - [x] Ability to sort workouts by a certain field (e.g. distance)<br>
 - [x] Re-build Running and Cycling objects coming from Local Storage<br>
-- [ ]	More realistic error and confirmation messages<br>
+- [x]	More realistic error and confirmation messages<br>
 - [ ]	Ability to position the map to show all workouts<br>
 - [x] Ability to draw lines and shapes instead of just points <br>
 - [ ]	Geocode location from coordinates ("Run in Faro, Portugal")<br>

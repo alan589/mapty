@@ -80,13 +80,12 @@ class App {
   #currentForm;
   #lastWorkoutClicked;
   #sortedAsc;
-  #drawnItems; 
+  #drawnItems;
   #drawControl;
   #disableDraw;
   #drawOptions;
 
   constructor() {
-
     this.#drawOptions = {
       shapeOptions: {
         color: "red",
@@ -94,7 +93,6 @@ class App {
         opacity: 1,
       },
     };
-
 
     this.#drawnItems = new L.FeatureGroup();
     this.#drawControl = new L.Control.Draw({
@@ -110,30 +108,35 @@ class App {
     });
 
     this.#disableDraw = new L.Control.Draw({
-          edit: {
-            featureGroup: this.#drawnItems,
-            edit: false
-          },
-          draw: false
+      edit: {
+        featureGroup: this.#drawnItems,
+        edit: false,
+      },
+      draw: false,
     });
 
     // Get user's position
     this._getPosition();
 
     // Attach event handlers
-    deleteAllBtn.addEventListener("click", this._displayConfirmationForm.bind(this));
+    deleteAllBtn.addEventListener(
+      "click",
+      this._displayConfirmationForm.bind(this)
+    );
 
-    confirmForm.addEventListener("click", function(e){
-      
-      console.log(e.target.textContent)
+    confirmForm.addEventListener(
+      "click",
+      function (e) {
+        console.log(e.target.textContent);
 
-      if(e.target.textContent === "Ok") {
-         this._reset();
-      }
-      if(e.target.textContent === "Cancel") {
-        this._hiddenConfirmationForm()
-      }
-    }.bind(this));
+        if (e.target.textContent === "Ok") {
+          this._reset();
+        }
+        if (e.target.textContent === "Cancel") {
+          this._hiddenConfirmationForm();
+        }
+      }.bind(this)
+    );
 
     sortBtn.addEventListener(
       "click",
@@ -227,7 +230,7 @@ class App {
     console.log(`https://www.google.pt/maps/@${latitude},${longitude}`);
 
     const coords = [latitude, longitude];
-    
+
     const osm = L.tileLayer(
       "https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png",
       {
@@ -268,16 +271,20 @@ class App {
         `<label><div><span>Maps</span></div></label>`
       );
 
-    const reOpenpoup = (e) => this.#drawnItems.getLayers(e).forEach((l) => l.openPopup());
+    const reOpenpoup = (e) =>
+      this.#drawnItems.getLayers(e).forEach((l) => l.openPopup());
     this.#map.on("draw:editstop", reOpenpoup);
     this.#map.on("draw:deletestop", reOpenpoup);
 
-    this.#map.on('draw:drawstop', function(e){
-      if(e.layerType === 'marker') {
-        this.#drawControl.remove();
-        this.#disableDraw.addTo(this.#map)
-      }
-    }.bind(this))
+    this.#map.on(
+      "draw:drawstop",
+      function (e) {
+        if (e.layerType === "marker") {
+          this.#drawControl.remove();
+          this.#disableDraw.addTo(this.#map);
+        }
+      }.bind(this)
+    );
 
     this.#map.on(
       L.Draw.Event.CREATED,
@@ -429,8 +436,7 @@ class App {
     // Hide form + clear input fields
     this._hideForm();
     this.#disableDraw.remove();
-    this.#drawControl.addTo(this.#map)
-    
+    this.#drawControl.addTo(this.#map);
   }
 
   _editWorkout(e) {
@@ -775,19 +781,18 @@ class App {
   _displayConfirmationForm() {
     this._hiddenWorkoutList();
     this._hideForm();
-    confirmForm.classList.remove('display-none');
+    confirmForm.classList.remove("display-none");
   }
   _hiddenConfirmationForm() {
     this._showWorkoutList();
-    confirmForm.classList.add('display-none');
+    confirmForm.classList.add("display-none");
   }
 
-  _reset(){
-      localStorage.removeItem("workouts");
-      localStorage.removeItem("drawlayers");
-      location.reload(); 
+  _reset() {
+    localStorage.removeItem("workouts");
+    localStorage.removeItem("drawlayers");
+    location.reload();
   }
-
 
   removeLayer(id) {
     this.#drawnItems.removeLayer(id);
