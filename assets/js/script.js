@@ -156,48 +156,239 @@ class App {
       }.bind(this)
     );
   }
-  _deleteWorkout(workoutEl){
-    const workoutIndex = this.#workouts.findIndex(w => w.id === workoutEl.dataset.id);
-    this.#drawnItems.removeLayer(this.#workouts[workoutIndex].point.id)
-    this.#workouts.splice(workoutIndex, 1);
-    workoutEl.remove();
-    this._setLocalStorageWorkout();
+
+  _getPosition() {
+    if (navigator.geolocation)
+      navigator.geolocation.getCurrentPosition(
+        this._loadMap.bind(this),
+        function () {
+          alert('Could not get your position');
+        }
+      );
   }
 
-  _displayEditForm(workoutEl){
-    if (workoutEl.classList.contains('workout--cycling')) {
-            inputType.value = 'cycling';
-            inputElevation
-              .closest('.form__row')
-              .classList.remove('form__row--hidden');
-            inputCadence
-              .closest('.form__row')
-              .classList.add('form__row--hidden');
-    } 
-    else {
-            inputType.value = 'running';
-            inputElevation
-              .closest('.form__row')
-              .classList.add('form__row--hidden');
-            inputCadence
-              .closest('.form__row')
-              .classList.remove('form__row--hidden');
+  _loadMap(position) {
+    // drawControl.options.draw.polyline.shapeOptions.color = '#0000FF';
+
+    const { latitude } = position.coords;
+    const { longitude } = position.coords;
+
+    console.log(`https://www.google.pt/maps/@${latitude},${longitude}`);
+
+    const coords = [latitude, longitude];
+    const drawOptions = {shapeOptions: {
+            color: 'red',
+            weight: 5,
+            opacity: 1,
+          }};
+
+  
+    const osm = L.tileLayer(
+      'https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',
+      {
+        attribution:
+          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      }
+    );
+
+    const google = L.tileLayer(
+            'http://www.google.cn/maps/vt?lyrs=s@189&gl=cn&x={x}&y={y}&z={z}',
+            {
+              attribution: 'google',
+            }
+          );
+
+
+    this.#map = L.map('map').setView(coords, this.#mapZoomLevel);
+    this.#map.addLayer(this.#drawnItems);
+
+    L.control.layers(
+        {
+          "google": google,
+          "osm": osm.addTo(this.#map)
+        },{},
+        { position: 'topright', collapsed: true }
+      ).addTo(this.#map);
+
+    const drawControl = new L.Control.Draw({
+      edit: {
+        featureGroup: this.#drawnItems,
+      },
+      draw: {
+        circle: false,
+        polyline: drawOptions,
+        polygon: drawOptions,
+        rectangle: drawOptions,
+        
+      },
+    });
+
+    this.#map.addControl(drawControl);
+    
+    document
+      .querySelector(
+        '#map > div.leaflet-control-container > div.leaflet-top.leaflet-right > div > section'
+      )
+      .insertAdjacentHTML(
+        'afterbegin',
+        `<label><div><span>Maps</span></div></label>`
+      );
+      this.#map.on('draw:editstop', function(e){
+        this.#drawnItems.getLayers(e).forEach(l => l.openPopup())
+      }.bind(this))
+      
+      this.#map.on('draw:deletestop', function(e){
+        this.#drawnItems.getLayers(e).forEach(l => l.openPopup())
+      }.bind(this))
+
+    this.#map.on(
+      L.Draw.Event.CREATED,
+      function (event) {
+        const layer = event.layer;
+        const layerID = this.#drawnItems.getLayerId(layer);
+        this.#mapEvent = event;
+        this.#drawnItems.addLayer(layer);
+
+        console.log(this.#drawnItems.getLayerId(layer))
+
+        if(event.layerType === "marker"){
+          console.log(event.layer.getLatLng())
+          this.#currentForm = 'newWorkout';
+          this._hidePopups();
+          this._showForm();
+        }
+
+        if(event.layerType !== "marker"){
+          const layerJSON = layer.toGeoJSON();
+          layerJSON.id = layerID;
+          this.#drawlayers.push(layerJSON);
+          this._setLocalStorageDrawlayer();
+        }
+
+      }.bind(this)
+    );
+
+    this.#map.on(
+      L.Draw.Event.EDITED,
+      function (event) {
+        const layers = event.layers;
+        console.log(layers)
+        layers.eachLayer(
+          function (layer) {
+            const layerID = this.#drawnItems.getLayerId(layer);
+            const layerJSON = layer.toGeoJSON();
+
+            if(layerJSON.geometry.type === 'Point'){
+              const workout = this.#workouts.find(w => w.point.id === layerID)
+              workout.point = layerJSON;
+              workout.point.id = layerID;
+              // layer.openPopup();
+              this._setLocalStorageWorkout();
+            }
+            else {
+              this.#drawnItems.addLayer(layer);
+              const indexLayer = this.#drawlayers.findIndex(
+                l => l.id === layerID
+              );
+              layerJSON.id = layerID;
+              this.#drawlayers[indexLayer] = layerJSON;
+
+              console.log(this.#drawlayers[indexLayer])
+              this._setLocalStorageDrawlayer(); 
+            }
+          
+          }.bind(this)
+        );
+      }.bind(this)
+    );
+
+    this.#map.on(
+      L.Draw.Event.DELETED,
+      function (e) {
+        const layers = e.layers;
+        layers.eachLayer(
+          function (layer) {
+            const layerJSON = layer.toGeoJSON();
+            const layerID = this.#drawnItems.getLayerId(layer);
+
+            if(layerJSON.geometry.type === 'Point'){
+              const workout = this.#workouts.find(w => w.point.id === layerID)
+              const workoutList = Array.from(document.querySelectorAll('.workouts li')); 
+              const workoutEl = workoutList.find(l => l.dataset.id === workout.id)
+              const workoutIndex = this.#workouts.findIndex(w => w.id === workoutEl.dataset.id);
+              this.#workouts.splice(workoutIndex, 1);
+              workoutEl.remove();
+              this._setLocalStorageWorkout();
+            }
+            else{
+              const drawIndex = this.#drawlayers.findIndex(d => d.id === layerID);
+              this.#drawlayers.splice(drawIndex, 1); 
+              this._setLocalStorageDrawlayer();
+            }
+
+          }.bind(this)
+        );
+      }.bind(this)
+    );
+
+    // Get data from local storage
+    this._getLocalStorageWorkouts();
+    this._getLocalStorageDrawlayers();
+  }
+
+  _newWorkout(e) {
+    e.preventDefault();
+
+    if (e.submitter.classList.contains('form__btn-ok')) {
+      let workout;
+
+      if (!this._validInputs()) {
+        return;
+      }
+
+      const pointJSON = this.#mapEvent.layer.toGeoJSON();
+      pointJSON.id = this.#drawnItems.getLayerId(this.#mapEvent.layer);
+
+      // If workout running, create running object
+      if (inputType.value === 'running')
+        workout = new Running(
+          +inputDistance.value,
+          +inputDuration.value,
+          +inputCadence.value,
+          pointJSON
+
+        );
+
+      // If workout cycling, create cycling object
+      if (inputType.value === 'cycling')
+        workout = new Cycling(
+      
+          +inputDistance.value,
+          +inputDuration.value,
+          +inputElevation.value,
+          pointJSON
+        );
+
+      // Add new object to workout array
+      this.#workouts.push(workout);
+
+      // Render workout on map as marker
+      this._renderWorkoutMarker(this.#mapEvent.layer, workout);
+
+      // Render workout on list
+      this._insertWorkout(form, 'afterend', workout);
+
+      // Set local storage to all workouts
+      this._setLocalStorageWorkout();
+
     }
-    this.#currentForm = 'editWorkout';
-    this._hidePopups();
-    this._showForm();
-    this._hiddenWorkoutList();
-  }
 
-  _hiddenWorkoutList() {
-    document
-      .querySelectorAll('.workouts li')
-      .forEach(li => li.classList.add('hidden-workouts'));
-  }
-  _showWorkoutList() {
-    document
-      .querySelectorAll('.workouts li')
-      .forEach(li => li.classList.remove('hidden-workouts'));
+    if (e.submitter.classList.contains('form__btn-cancel')){
+      this.#drawnItems.removeLayer(this.#mapEvent.layer);
+    }
+
+    // Hide form + clear input fields
+    this._hideForm();
   }
 
   _editWorkout(e) {
@@ -264,6 +455,51 @@ class App {
       this.#currentForm = undefined;
     }
   }
+
+  _deleteWorkout(workoutEl){
+    const workoutIndex = this.#workouts.findIndex(w => w.id === workoutEl.dataset.id);
+    this.#drawnItems.removeLayer(this.#workouts[workoutIndex].point.id)
+    this.#workouts.splice(workoutIndex, 1);
+    workoutEl.remove();
+    this._setLocalStorageWorkout();
+  }
+
+  _displayEditForm(workoutEl){
+    if (workoutEl.classList.contains('workout--cycling')) {
+            inputType.value = 'cycling';
+            inputElevation
+              .closest('.form__row')
+              .classList.remove('form__row--hidden');
+            inputCadence
+              .closest('.form__row')
+              .classList.add('form__row--hidden');
+    } 
+    else {
+            inputType.value = 'running';
+            inputElevation
+              .closest('.form__row')
+              .classList.add('form__row--hidden');
+            inputCadence
+              .closest('.form__row')
+              .classList.remove('form__row--hidden');
+    }
+    this.#currentForm = 'editWorkout';
+    this._hidePopups();
+    this._showForm();
+    this._hiddenWorkoutList();
+  }
+
+  _hiddenWorkoutList() {
+    document
+      .querySelectorAll('.workouts li')
+      .forEach(li => li.classList.add('hidden-workouts'));
+  }
+  _showWorkoutList() {
+    document
+      .querySelectorAll('.workouts li')
+      .forEach(li => li.classList.remove('hidden-workouts'));
+  }
+
   _closeEdit(e) {
     this._hidePopups();
   }
@@ -278,179 +514,6 @@ class App {
       popup.classList.add('hidden');
       popup.style.right = '-100px';
     });
-  }
-
-  _getPosition() {
-    if (navigator.geolocation)
-      navigator.geolocation.getCurrentPosition(
-        this._loadMap.bind(this),
-        function () {
-          alert('Could not get your position');
-        }
-      );
-
-    // this._loadMap({})
-  }
-
-  _loadMap(position) {
-    const { latitude } = position.coords;
-    const { longitude } = position.coords;
-    // const latitude  = -22.8655104;
-    // const longitude  = -43.4274304;
-
-    console.log(`https://www.google.pt/maps/@${latitude},${longitude}`);
-
-    const coords = [latitude, longitude];
-    const drawOptions = {shapeOptions: {
-            color: 'red',
-            weight: 5,
-            opacity: 1,
-          }};
-
-  
-    const osm = L.tileLayer(
-      'https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',
-      {
-        attribution:
-          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-      }
-    );
-
-    const google = L.tileLayer(
-            'http://www.google.cn/maps/vt?lyrs=s@189&gl=cn&x={x}&y={y}&z={z}',
-            {
-              attribution: 'google',
-            }
-          );
-
-
-    this.#map = L.map('map').setView(coords, this.#mapZoomLevel);
-    this.#map.addLayer(this.#drawnItems);
-
-    L.control.layers(
-        {
-          "google": google,
-          "osm": osm.addTo(this.#map)
-        },{},
-        { position: 'topright', collapsed: true }
-      ).addTo(this.#map);
-
-    const drawControl = new L.Control.Draw({
-      edit: {
-        featureGroup: this.#drawnItems,
-      },
-      draw: {
-        circle: false,
-        polyline: drawOptions,
-        polygon: drawOptions,
-        rectangle: drawOptions,
-        
-      },
-    });
-
-    this.#map.addControl(drawControl);
-    // drawControl.options.draw.polyline.shapeOptions.color = '#0000FF';
-
-    document
-      .querySelector(
-        '#map > div.leaflet-control-container > div.leaflet-top.leaflet-right > div > section'
-      )
-      .insertAdjacentHTML(
-        'afterbegin',
-        `<label><div><span>Maps</span></div></label>`
-      );
-
-    this.#map.on(
-      L.Draw.Event.CREATED,
-      function (event) {
-        const layer = event.layer;
-        const layerID = this.#drawnItems.getLayerId(layer);
-        this.#mapEvent = event;
-        this.#drawnItems.addLayer(layer);
-
-        console.log(this.#drawnItems.getLayerId(layer))
-
-        if(event.layerType === "marker"){
-          console.log(event.layer.getLatLng())
-          this.#currentForm = 'newWorkout';
-          this._hidePopups();
-          this._showForm();
-        }
-
-        if(event.layerType !== "marker"){
-          const layerJSON = layer.toGeoJSON();
-          layerJSON.id = layerID;
-          this.#drawlayers.push(layerJSON);
-          this._setLocalStorageDrawlayer();
-        }
-
-      }.bind(this)
-    );
-
-    this.#map.on(
-      L.Draw.Event.EDITED,
-      function (event) {
-        const layers = event.layers;
-        layers.eachLayer(
-          function (layer) {
-            const layerID = this.#drawnItems.getLayerId(layer);
-            const layerJSON = layer.toGeoJSON();
-
-            if(layerJSON.geometry.type === 'Point'){
-              const workout = this.#workouts.find(w => w.point.id === layerID)
-              workout.point = layerJSON;
-              workout.point.id = layerID;
-              this._setLocalStorageWorkout();
-            }
-            else {
-              this.#drawnItems.addLayer(layer);
-              const indexLayer = this.#drawlayers.findIndex(
-                l => l.id === layerID
-              );
-              layerJSON.id = layerID;
-              this.#drawlayers[indexLayer] = layerJSON;
-
-              console.log(this.#drawlayers[indexLayer])
-              this._setLocalStorageDrawlayer(); 
-            }
-          
-          }.bind(this)
-        );
-      }.bind(this)
-    );
-
-    this.#map.on(
-      L.Draw.Event.DELETED,
-      function (e) {
-        const layers = e.layers;
-        layers.eachLayer(
-          function (layer) {
-            const layerJSON = layer.toGeoJSON();
-            const layerID = this.#drawnItems.getLayerId(layer);
-
-            if(layerJSON.geometry.type === 'Point'){
-              const workout = this.#workouts.find(w => w.point.id === layerID)
-              const workoutList = Array.from(document.querySelectorAll('.workouts li')); 
-              const workoutEl = workoutList.find(l => l.dataset.id === workout.id)
-              const workoutIndex = this.#workouts.findIndex(w => w.id === workoutEl.dataset.id);
-              this.#workouts.splice(workoutIndex, 1);
-              workoutEl.remove();
-              this._setLocalStorageWorkout();
-            }
-            else{
-              const drawIndex = this.#drawlayers.findIndex(d => d.id === layerID);
-              this.#drawlayers.splice(drawIndex, 1); 
-              this._setLocalStorageDrawlayer();
-            }
-
-          }.bind(this)
-        );
-      }.bind(this)
-    );
-
-    // Get data from local storage
-    this._getLocalStorageWorkouts();
-    this._getLocalStorageDrawlayers();
   }
 
   _showForm() {
@@ -494,7 +557,6 @@ class App {
       inputs.every(inp => Number.isFinite(inp));
     const allPositive = (...inputs) => inputs.every(inp => inp > 0);
 
-    // Check if data is valid
     if (type === 'running') {
       const cadence = +inputCadence.value;
       if (
@@ -506,7 +568,6 @@ class App {
       }
     }
 
-    // If workout cycling, create cycling object
     if (type === 'cycling') {
       const elevation = +inputElevation.value;
       if (
@@ -519,65 +580,6 @@ class App {
     }
     return true;
   }
-  _newWorkout(e) {
-    e.preventDefault();
-
-    if (e.submitter.classList.contains('form__btn-ok')) {
-      let workout;
-
-      // If workout running, create running object
-
-      if (!this._validInputs()) {
-        return;
-      }
-
-      
-      const pointJSON = this.#mapEvent.layer.toGeoJSON();
-      pointJSON.id = this.#drawnItems.getLayerId(this.#mapEvent.layer);
-
-      if (inputType.value === 'running')
-        workout = new Running(
-          +inputDistance.value,
-          +inputDuration.value,
-          +inputCadence.value,
-          pointJSON
-
-        );
-
-      // If workout cycling, create cycling object
-      if (inputType.value === 'cycling')
-        workout = new Cycling(
-      
-          +inputDistance.value,
-          +inputDuration.value,
-          +inputElevation.value,
-          pointJSON
-        );
-
-      // Add new object to workout array
-      this.#workouts.push(workout);
-
-      // Render workout on map as marker
-      this._renderWorkoutMarker(this.#mapEvent.layer, workout);
-
-      // Render workout on list
-      this._insertWorkout(form, 'afterend', workout);
-
-      // Set local storage to all workouts
-      this._setLocalStorageWorkout();
-
-    }
-
-    if (e.submitter.classList.contains('form__btn-cancel')){
-      this.#drawnItems.removeLayer(this.#mapEvent.layer);
-    }
-
-
-
-    // Hide form + clear input fields
-    this._hideForm();
-  }
-
 
   _renderWorkoutMarker(layer, workout){
             layer.bindPopup(
