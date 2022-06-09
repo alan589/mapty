@@ -67,6 +67,9 @@ const inputElevation = document.querySelector(".form__input--elevation");
 const sortBtn = document.querySelector(".sort-btn");
 const sortOption = document.querySelector("#sort-select");
 const deleteAllBtn = document.querySelector(".delete-btn");
+const confirmForm = document.querySelector(".confirmation-form");
+// const confirmOk = document.querySelector(".confirmation-form");
+// const confirmCancel = document.querySelector(".confirmation-form");
 
 class App {
   #map;
@@ -77,14 +80,60 @@ class App {
   #currentForm;
   #lastWorkoutClicked;
   #sortedAsc;
-  #drawnItems = new L.FeatureGroup();
+  #drawnItems; 
+  #drawControl;
+  #disableDraw;
+  #drawOptions;
 
   constructor() {
+
+    this.#drawOptions = {
+      shapeOptions: {
+        color: "red",
+        weight: 5,
+        opacity: 1,
+      },
+    };
+
+
+    this.#drawnItems = new L.FeatureGroup();
+    this.#drawControl = new L.Control.Draw({
+      edit: {
+        featureGroup: this.#drawnItems,
+      },
+      draw: {
+        circle: false,
+        polyline: this.#drawOptions,
+        polygon: this.#drawOptions,
+        rectangle: this.#drawOptions,
+      },
+    });
+
+    this.#disableDraw = new L.Control.Draw({
+          edit: {
+            featureGroup: this.#drawnItems,
+            edit: false
+          },
+          draw: false
+    });
+
     // Get user's position
     this._getPosition();
 
     // Attach event handlers
-    deleteAllBtn.addEventListener("click", this.reset);
+    deleteAllBtn.addEventListener("click", this._displayConfirmationForm.bind(this));
+
+    confirmForm.addEventListener("click", function(e){
+      
+      console.log(e.target.textContent)
+
+      if(e.target.textContent === "Ok") {
+         this._reset();
+      }
+      if(e.target.textContent === "Cancel") {
+        this._hiddenConfirmationForm()
+      }
+    }.bind(this));
 
     sortBtn.addEventListener(
       "click",
@@ -178,14 +227,7 @@ class App {
     console.log(`https://www.google.pt/maps/@${latitude},${longitude}`);
 
     const coords = [latitude, longitude];
-    const drawOptions = {
-      shapeOptions: {
-        color: "red",
-        weight: 5,
-        opacity: 1,
-      },
-    };
-
+    
     const osm = L.tileLayer(
       "https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png",
       {
@@ -215,19 +257,7 @@ class App {
       )
       .addTo(this.#map);
 
-    const drawControl = new L.Control.Draw({
-      edit: {
-        featureGroup: this.#drawnItems,
-      },
-      draw: {
-        circle: false,
-        polyline: drawOptions,
-        polygon: drawOptions,
-        rectangle: drawOptions,
-      },
-    });
-
-    this.#map.addControl(drawControl);
+    this.#map.addControl(this.#drawControl);
 
     document
       .querySelector(
@@ -242,6 +272,13 @@ class App {
     this.#map.on("draw:editstop", reOpenpoup);
     this.#map.on("draw:deletestop", reOpenpoup);
 
+    this.#map.on('draw:drawstop', function(e){
+      if(e.layerType === 'marker') {
+        this.#drawControl.remove();
+        this.#disableDraw.addTo(this.#map)
+      }
+    }.bind(this))
+
     this.#map.on(
       L.Draw.Event.CREATED,
       function (event) {
@@ -250,10 +287,7 @@ class App {
         this.#mapEvent = event;
         this.#drawnItems.addLayer(layer);
 
-        console.log(this.#drawnItems.getLayerId(layer));
-
         if (event.layerType === "marker") {
-          console.log(event.layer.getLatLng());
           this.#currentForm = "newWorkout";
           this._hidePopups();
           this._showForm();
@@ -394,6 +428,9 @@ class App {
 
     // Hide form + clear input fields
     this._hideForm();
+    this.#disableDraw.remove();
+    this.#drawControl.addTo(this.#map)
+    
   }
 
   _editWorkout(e) {
@@ -685,13 +722,6 @@ class App {
 
   _getLocalStorageDrawlayers() {
     const drawlayersData = JSON.parse(localStorage.getItem("drawlayers"));
-    const drawOptions = {
-      shapeOptions: {
-        color: "red",
-        weight: 5,
-        opacity: 1,
-      },
-    };
 
     if (!drawlayersData) return;
 
@@ -703,7 +733,7 @@ class App {
           this.#drawlayers.push(draw);
         }.bind(this),
         style: function (feature) {
-          return drawOptions.shapeOptions;
+          return this.#drawOptions.shapeOptions;
         },
       });
     });
@@ -742,11 +772,22 @@ class App {
     });
   }
 
-  reset() {
-    localStorage.removeItem("workouts");
-    localStorage.removeItem("drawlayers");
-    location.reload();
+  _displayConfirmationForm() {
+    this._hiddenWorkoutList();
+    this._hideForm();
+    confirmForm.classList.remove('display-none');
   }
+  _hiddenConfirmationForm() {
+    this._showWorkoutList();
+    confirmForm.classList.add('display-none');
+  }
+
+  _reset(){
+      localStorage.removeItem("workouts");
+      localStorage.removeItem("drawlayers");
+      location.reload(); 
+  }
+
 
   removeLayer(id) {
     this.#drawnItems.removeLayer(id);
