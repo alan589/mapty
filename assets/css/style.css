@@ -21,7 +21,7 @@ html {
 }
 
 body {
-  font-family: 'Manrope', sans-serif;
+  font-family: "Manrope", sans-serif;
   color: var(--color-light--2);
   font-weight: 400;
   line-height: 1.6;
@@ -118,45 +118,43 @@ body {
   font-size: 38px;
   transition: color 0.2s;
 }
-.workout__edit:hover{
+.workout__edit:hover {
   color: var(--color-dark--1);
 }
 
-.workout__popup{
-    font-size: 15px;
-    background: #2d3439;
-    color: #d7d9da;
-    position: absolute;
-    top: 0px;
-    right: -100px;
-    padding: 23px;
-    border-radius: 5px;
-    z-index: 999;
-    transition: all 0.4s;
+.workout__popup {
+  font-size: 15px;
+  background: #2d3439;
+  color: #d7d9da;
+  position: absolute;
+  top: 0px;
+  right: -100px;
+  padding: 23px;
+  border-radius: 5px;
+  z-index: 999;
+  transition: all 0.4s;
 }
 
-.workout__popup p{
+.workout__popup p {
   transition: all 0.2s;
 }
 
-
-.workout__popup p:hover{
+.workout__popup p:hover {
   color: #42484d;
 }
 
-.workout__close{
+.workout__close {
   position: absolute;
-    top: -11px;
-    right: 0;
-    font-size: 20px;
-
+  top: -11px;
+  right: 0;
+  font-size: 20px;
 }
 
 .display-none {
   display: none;
 }
 
-.hidden-workouts{
+.hidden-workouts {
   opacity: 0;
   z-index: -1;
 }
@@ -172,10 +170,9 @@ body {
   gap: 0.5rem 2.5rem;
 
   /* Match height and activity boxes */
-  height: 10.70rem;
+  height: 10.7rem;
   transition: all 0.5s, transform 1ms;
   position: relative;
-  
 }
 
 .invalid-input {
@@ -184,15 +181,14 @@ body {
 }
 
 .form.invalid-input::after {
-    content: "Invalid Input!";
-    color: orangered;
-    font-weight: 700;
-    position: absolute;
-    left: 25px;
-    bottom: 0px;
-    font-size: 1.5rem;
+  content: "Invalid Input!";
+  color: orangered;
+  font-weight: 700;
+  position: absolute;
+  left: 25px;
+  bottom: 0px;
+  font-size: 1.5rem;
 }
-
 
 /* EDITAR */
 .form__edit.form-label {
@@ -257,7 +253,7 @@ body {
   width: 50px;
 }
 
-.form__btn:hover{
+.form__btn:hover {
   background: #373c40;
 }
 
@@ -272,8 +268,8 @@ body {
   text-align: center;
   color: #2d3439;
   position: absolute;
-  left:  50%;
-  transform:  translate(-50%, 0);
+  left: 50%;
+  transform: translate(-50%, 0);
   bottom: 0;
   width: 100%;
 }
@@ -322,12 +318,12 @@ body {
 }
 
 .buttons select {
-    border-radius: 5px;
-    background: #42484d;
-    color: #dfe0e1;
-    cursor: pointer;
-    border: none;
-    padding: 3px;
+  border-radius: 5px;
+  background: #42484d;
+  color: #dfe0e1;
+  cursor: pointer;
+  border: none;
+  padding: 3px;
 }
 
 .buttons .delete-btn {
@@ -359,5 +355,4 @@ body {
 }
 .buttons button:hover {
   background: #31363a;
-
 }
