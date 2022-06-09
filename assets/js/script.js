@@ -208,6 +208,7 @@ class App {
           workout => workout.id === this.#lastWorkoutClicked.dataset.id
         );
         const workoutObj = this.#workouts[workoutIndex];
+        console.log(workoutObj, workoutIndex)
         if (inputType.value !== workoutObj.type) {
           if (inputType.value === 'running') {
             this.#workouts[workoutIndex] = new Running(
@@ -228,6 +229,7 @@ class App {
           this.#workouts[workoutIndex].id = workoutObj.id;
 
           const layer = this.#drawnItems.getLayer(this.#workouts[workoutIndex].point.id)
+          console.log(this.#workouts[workoutIndex])
           layer.closePopup();
           this._renderWorkoutMarker(layer, this.#workouts[workoutIndex]);
 
@@ -321,18 +323,6 @@ class App {
             }
           );
 
-    // LEAFTLET DRAW
-    // const data = JSON.parse(localStorage.getItem('drawlayers'));
-    // if (data) data.forEach(d => this.#drawlayers.push(d));
-
-    // L.geoJson(data, {
-    //   onEachFeature: function (feature, layer) {
-    //     this.#drawnItems.addLayer(layer);
-    //   }.bind(this),
-    //   style: function (feature) {
-    //     return drawOptions.shapeOptions;
-    //   },
-    // });
 
     this.#map = L.map('map').setView(coords, this.#mapZoomLevel);
     this.#map.addLayer(this.#drawnItems);
@@ -419,6 +409,8 @@ class App {
               );
               layerJSON.id = layerID;
               this.#drawlayers[indexLayer] = layerJSON;
+
+              console.log(this.#drawlayers[indexLayer])
               this._setLocalStorageDrawlayer(); 
             }
           
@@ -458,6 +450,7 @@ class App {
 
     // Get data from local storage
     this._getLocalStorageWorkouts();
+    this._getLocalStorageDrawlayers();
   }
 
   _showForm() {
@@ -538,7 +531,9 @@ class App {
         return;
       }
 
+      
       const pointJSON = this.#mapEvent.layer.toGeoJSON();
+      pointJSON.id = this.#drawnItems.getLayerId(this.#mapEvent.layer);
 
       if (inputType.value === 'running')
         workout = new Running(
@@ -681,50 +676,64 @@ class App {
     localStorage.setItem('drawlayers', JSON.stringify(this.#drawlayers));
   }
 
-  _getLocalStorageWorkouts() {
-    const workoutsData = JSON.parse(localStorage.getItem('workouts'));
-    // const drawlayersData = JSON.parse(localStorage.getItem('drawlayers'));
-    let workout;
-    let pointLayer;
-    let layerID;
-    if (!workoutsData) return;
+  _getLocalStorageDrawlayers(){
+    const drawlayersData = JSON.parse(localStorage.getItem('drawlayers'));
+    const drawOptions = {shapeOptions: {
+            color: 'red',
+            weight: 5,
+            opacity: 1,
+          }};
+    
+    if (!drawlayersData) return;
 
-    console.log('workout', workoutsData);
-
-
-    workoutsData.forEach(work => {
-      
-      L.geoJson(work.point, {
+    drawlayersData.forEach(draw => {
+      L.geoJson(draw, {
         onEachFeature: function (feature, layer) {
-          pointLayer = layer;
           this.#drawnItems.addLayer(layer);
-          layerID = this.#drawnItems.getLayerId(layer);
+          draw.id = this.#drawnItems.getLayerId(layer);
+          this.#drawlayers.push(draw);
         }.bind(this),
         style: function (feature) {
           return drawOptions.shapeOptions;
         },
       });
 
-      work.point.id = layerID;
-      if (work.type === 'running')
-        workout = new Running(
-          work.distance,
-          work.duration,
-          work.cadence,
-          work.point
-          );
+    });
 
-      if (work.type === 'cycling')
-        workout = new Cycling(
-          work.distance,
-          work.duration,
-          work.elevationGain,
-          work.point
-          );
-      this.#workouts.push(workout);
-      this._renderWorkoutMarker(pointLayer, workout);
-      this._insertWorkout(form, 'afterend', workout);
-      // this._setLocalStorageWorkout();
+    
+  }
+
+  _getLocalStorageWorkouts() {
+    const workoutsData = JSON.parse(localStorage.getItem('workouts'));
+    let workout;
+    if (!workoutsData) return;
+
+    workoutsData.forEach(work => {
+      
+      L.geoJson(work.point, {
+        onEachFeature: function (feature, layer) {
+          this.#drawnItems.addLayer(layer);
+          work.point.id = this.#drawnItems.getLayerId(layer);
+          if (work.type === 'running')
+            workout = new Running(
+              work.distance,
+              work.duration,
+              work.cadence,
+              work.point
+              );
+
+          if (work.type === 'cycling')
+            workout = new Cycling(
+              work.distance,
+              work.duration,
+              work.elevationGain,
+              work.point
+              );
+          this.#workouts.push(workout);
+          this._renderWorkoutMarker(layer, workout);
+          this._insertWorkout(form, 'afterend', workout);
+        }.bind(this)
+      });
     });
   }
 
