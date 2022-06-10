@@ -199,8 +199,10 @@ class App {
           this._closeEdit(e);
         else if (e.target.closest(".workout__popup")) {
           this.#lastWorkoutClicked = workoutEl;
-          if (e.target.classList.contains("edit"))
+          if (e.target.classList.contains("edit")){
+            this._setControlDraw(this.#disableDraw, this.#drawControl);
             this._displayEditForm(workoutEl);
+          }
           if (e.target.classList.contains("delete"))
             this._deleteWorkout(workoutEl);
         } else {
@@ -280,8 +282,7 @@ class App {
       "draw:drawstop",
       function (e) {
         if (e.layerType === "marker") {
-          this.#drawControl.remove();
-          this.#disableDraw.addTo(this.#map);
+          this._setControlDraw(this.#disableDraw, this.#drawControl);
         }
       }.bind(this)
     );
@@ -435,8 +436,7 @@ class App {
 
     // Hide form + clear input fields
     this._hideForm();
-    this.#disableDraw.remove();
-    this.#drawControl.addTo(this.#map);
+    this._setControlDraw(this.#drawControl, this.#disableDraw);
   }
 
   _editWorkout(e) {
@@ -497,12 +497,19 @@ class App {
         this._showWorkoutList();
         this._hideForm();
         this.#currentForm = undefined;
+        this._setControlDraw(this.#drawControl, this.#disableDraw)
       }
     } else {
       this._showWorkoutList();
       this._hideForm();
       this.#currentForm = undefined;
+      this._setControlDraw(this.#drawControl, this.#disableDraw)
     }
+  }
+
+  _setControlDraw(controlAdd, controlRemove){
+    controlAdd.addTo(this.#map);
+    controlRemove.remove();
   }
 
   _deleteWorkout(workoutEl) {
