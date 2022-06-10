@@ -526,6 +526,7 @@ class App {
     this.#workouts.splice(workoutIndex, 1);
     workoutEl.remove();
     this._setLocalStorageWorkout();
+	if(this.#workouts.length === 0) startMsg.style.display = "block";
   }
 
   _displayEditForm(workoutEl) {
