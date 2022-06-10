@@ -388,6 +388,18 @@ body {
   background-color: #dd3232;
 }
 
+.start-message{
+	display: none;
+	padding: 57px;
+    border-radius: 5px;
+    background: #42484d;
+    position: sticky;
+    font-size: 1.6rem;
+    top: 50%;
+    transform: translate(0, -50%);
+	text-align: center;
+}
+
 
 
 

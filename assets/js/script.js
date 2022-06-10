@@ -68,8 +68,7 @@ const sortBtn = document.querySelector(".sort-btn");
 const sortOption = document.querySelector("#sort-select");
 const deleteAllBtn = document.querySelector(".delete-btn");
 const confirmForm = document.querySelector(".confirmation-form");
-// const confirmOk = document.querySelector(".confirmation-form");
-// const confirmCancel = document.querySelector(".confirmation-form");
+const startMsg = document.querySelector(".start-message");
 
 class App {
   #map;
@@ -281,7 +280,9 @@ class App {
     this.#map.on(
       "draw:drawstop",
       function (e) {
+		console.log(this.#currentForm);
         if (e.layerType === "marker") {
+		  if(this.#currentForm !== undefined)
           this._setControlDraw(this.#disableDraw, this.#drawControl);
         }
       }.bind(this)
@@ -297,7 +298,9 @@ class App {
 
         if (event.layerType === "marker") {
           this.#currentForm = "newWorkout";
+		  startMsg.style.display = "none";
           this._hidePopups();
+		  this._hiddenWorkoutList();
           this._showForm();
         }
 
@@ -436,7 +439,10 @@ class App {
 
     // Hide form + clear input fields
     this._hideForm();
+	this._showWorkoutList();
+	this.#currentForm = undefined;
     this._setControlDraw(this.#drawControl, this.#disableDraw);
+	if(this.#workouts.length === 0) startMsg.style.display = "block";
   }
 
   _editWorkout(e) {
@@ -737,7 +743,7 @@ class App {
     const drawlayersData = JSON.parse(localStorage.getItem("drawlayers"));
 
     if (!drawlayersData) return;
-
+	
     drawlayersData.forEach((draw) => {
       L.geoJson(draw, {
         onEachFeature: function (feature, layer) {
@@ -755,7 +761,11 @@ class App {
   _getLocalStorageWorkouts() {
     const workoutsData = JSON.parse(localStorage.getItem("workouts"));
     let workout;
-    if (!workoutsData) return;
+
+    if (!workoutsData || workoutsData.length === 0){
+		startMsg.style.display = "block";
+		return;
+	}
 
     workoutsData.forEach((work) => {
       L.geoJson(work.point, {
