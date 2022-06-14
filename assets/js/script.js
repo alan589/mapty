@@ -69,6 +69,7 @@ const sortOption = document.querySelector("#sort-select");
 const deleteAllBtn = document.querySelector(".delete-btn");
 const confirmForm = document.querySelector(".confirmation-form");
 const startMsg = document.querySelector(".start-message");
+const fitBtn = document.querySelector(".fit-workouts");
 
 class App {
   #map;
@@ -83,6 +84,7 @@ class App {
   #drawControl;
   #disableDraw;
   #drawOptions;
+
 
   constructor() {
     this.#drawOptions = {
@@ -126,8 +128,6 @@ class App {
     confirmForm.addEventListener(
       "click",
       function (e) {
-        console.log(e.target.textContent);
-
         if (e.target.textContent === "Ok") {
           this._reset();
         }
@@ -136,6 +136,8 @@ class App {
         }
       }.bind(this)
     );
+
+    fitBtn.addEventListener('click', this._fitWorkouts.bind(this))
 
     sortBtn.addEventListener(
       "click",
@@ -280,7 +282,6 @@ class App {
     this.#map.on(
       "draw:drawstop",
       function (e) {
-		console.log(this.#currentForm);
         if (e.layerType === "marker") {
 		  if(this.#currentForm !== undefined)
           this._setControlDraw(this.#disableDraw, this.#drawControl);
@@ -317,7 +318,6 @@ class App {
       L.Draw.Event.EDITED,
       function (event) {
         const layers = event.layers;
-        console.log(layers);
         layers.eachLayer(
           function (layer) {
             const layerID = this.#drawnItems.getLayerId(layer);
@@ -338,8 +338,6 @@ class App {
               );
               layerJSON.id = layerID;
               this.#drawlayers[indexLayer] = layerJSON;
-
-              console.log(this.#drawlayers[indexLayer]);
               this._setLocalStorageDrawlayer();
             }
           }.bind(this)
@@ -453,7 +451,6 @@ class App {
           (workout) => workout.id === this.#lastWorkoutClicked.dataset.id
         );
         const workoutObj = this.#workouts[workoutIndex];
-        console.log(workoutObj, workoutIndex);
         if (inputType.value !== workoutObj.type) {
           if (inputType.value === "running") {
             this.#workouts[workoutIndex] = new Running(
@@ -476,7 +473,6 @@ class App {
           const layer = this.#drawnItems.getLayer(
             this.#workouts[workoutIndex].point.id
           );
-          console.log(this.#workouts[workoutIndex]);
           layer.closePopup();
           this._renderWorkoutMarker(layer, this.#workouts[workoutIndex]);
         } else {
@@ -732,6 +728,10 @@ class App {
       },
     });
   }
+  _fitWorkouts(){
+    const bounds = this.#drawnItems.getBounds().pad(0.10);
+    this.#map.fitBounds(bounds);
+  }
 
   _setLocalStorageWorkout() {
     localStorage.setItem("workouts", JSON.stringify(this.#workouts));
@@ -812,28 +812,10 @@ class App {
     location.reload();
   }
 
-  removeLayer(id) {
-    this.#drawnItems.removeLayer(id);
-  }
-
-  eachLayerId() {
-    this.#drawnItems.eachLayer(function (l) {
-      console.log(this.#drawnItems.getLayerId(l));
-    });
-  }
-
-  get drawnitems() {
-    return this.#drawnItems;
-  }
-  get layerIds() {
-    return this.#drawnItems.getLayers();
-  }
   get workouts() {
     return this.#workouts;
   }
-  get drawlayers() {
-    return this.#drawlayers;
-  }
+
 }
 
 const app = new App();

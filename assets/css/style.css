@@ -335,11 +335,11 @@ body {
   border: none;
   font-weight: 600;
   cursor: pointer;
-  margin: 0 10px;
+  margin-left: 10px;
   transition: all 0.4s;
 }
 
-.buttons .sort-btn {
+.buttons .sort-btn, .buttons .fit-workouts {
   padding: 4px 8px;
   border-radius: 5px;
   background: #42484d;
@@ -391,12 +391,12 @@ body {
 .start-message{
 	display: none;
 	padding: 57px;
-    border-radius: 5px;
-    background: #42484d;
-    position: sticky;
-    font-size: 1.6rem;
-    top: 50%;
-    transform: translate(0, -50%);
+  border-radius: 5px;
+  background: #42484d;
+  position: sticky;
+  font-size: 1.6rem;
+  top: 50%;
+  transform: translate(0, -50%);
 	text-align: center;
 }
 
