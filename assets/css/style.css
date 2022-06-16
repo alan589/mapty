@@ -94,10 +94,12 @@ body {
 }
 
 .workout__icon {
-  font-size: 1.8rem;
-  margin-right: 0.2rem;
-  height: 0.28rem;
+  margin-right: 0.4rem;
+  width: 20px;
+  height: 20px;
 }
+
+
 
 .workout__value {
   font-size: 1.5rem;
