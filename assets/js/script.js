@@ -85,7 +85,6 @@ class App {
   #disableDraw;
   #drawOptions;
 
-
   constructor() {
     this.#drawOptions = {
       shapeOptions: {
@@ -105,6 +104,9 @@ class App {
         polyline: this.#drawOptions,
         polygon: this.#drawOptions,
         rectangle: this.#drawOptions,
+        // marker: {
+        //   icon: null,
+        // }
       },
     });
 
@@ -137,7 +139,7 @@ class App {
       }.bind(this)
     );
 
-    fitBtn.addEventListener('click', this._fitWorkouts.bind(this))
+    fitBtn.addEventListener("click", this._fitWorkouts.bind(this));
 
     sortBtn.addEventListener(
       "click",
@@ -200,7 +202,7 @@ class App {
           this._closeEdit(e);
         else if (e.target.closest(".workout__popup")) {
           this.#lastWorkoutClicked = workoutEl;
-          if (e.target.classList.contains("edit")){
+          if (e.target.classList.contains("edit")) {
             this._setControlDraw(this.#disableDraw, this.#drawControl);
             this._displayEditForm(workoutEl);
           }
@@ -283,8 +285,8 @@ class App {
       "draw:drawstop",
       function (e) {
         if (e.layerType === "marker") {
-		  if(this.#currentForm !== undefined)
-          this._setControlDraw(this.#disableDraw, this.#drawControl);
+          if (this.#currentForm !== undefined)
+            this._setControlDraw(this.#disableDraw, this.#drawControl);
         }
       }.bind(this)
     );
@@ -295,17 +297,18 @@ class App {
         const layer = event.layer;
         const layerID = this.#drawnItems.getLayerId(layer);
         this.#mapEvent = event;
-        this.#drawnItems.addLayer(layer);
 
         if (event.layerType === "marker") {
+          this.#map.addControl(this.#drawControl);
           this.#currentForm = "newWorkout";
-		  startMsg.style.display = "none";
+          startMsg.style.display = "none";
           this._hidePopups();
-		  this._hiddenWorkoutList();
+          this._hiddenWorkoutList();
           this._showForm();
         }
 
         if (event.layerType !== "marker") {
+          this.#drawnItems.addLayer(layer);
           const layerJSON = layer.toGeoJSON();
           layerJSON.id = layerID;
           this.#drawlayers.push(layerJSON);
@@ -397,8 +400,20 @@ class App {
         return;
       }
 
-      const pointJSON = this.#mapEvent.layer.toGeoJSON();
-      pointJSON.id = this.#drawnItems.getLayerId(this.#mapEvent.layer);
+      const iconPng = L.icon({
+        iconUrl: `./assets/imgs/${inputType.value}.png`,
+        iconSize: [40, 40],
+        iconAnchor: [18, 41],
+        popupAnchor: [0, -41],
+      });
+
+      const { lat, lng } = this.#mapEvent.layer.getLatLng();
+
+      const layer = L.marker([lat, lng], { icon: iconPng });
+      this.#drawnItems.addLayer(layer);
+
+      const pointJSON = layer.toGeoJSON();
+      pointJSON.id = this.#drawnItems.getLayerId(layer);
 
       // If workout running, create running object
       if (inputType.value === "running")
@@ -422,7 +437,7 @@ class App {
       this.#workouts.push(workout);
 
       // Render workout on map as marker
-      this._renderWorkoutMarker(this.#mapEvent.layer, workout);
+      this._renderWorkoutMarker(layer, workout);
 
       // Render workout on list
       this._insertWorkout(form, "afterend", workout);
@@ -437,10 +452,10 @@ class App {
 
     // Hide form + clear input fields
     this._hideForm();
-	this._showWorkoutList();
-	this.#currentForm = undefined;
+    this._showWorkoutList();
+    this.#currentForm = undefined;
     this._setControlDraw(this.#drawControl, this.#disableDraw);
-	if(this.#workouts.length === 0) startMsg.style.display = "block";
+    if (this.#workouts.length === 0) startMsg.style.display = "block";
   }
 
   _editWorkout(e) {
@@ -470,10 +485,29 @@ class App {
           this.#workouts[workoutIndex].date = workoutObj.date;
           this.#workouts[workoutIndex].id = workoutObj.id;
 
-          const layer = this.#drawnItems.getLayer(
+          let layer = this.#drawnItems.getLayer(
             this.#workouts[workoutIndex].point.id
           );
           layer.closePopup();
+          this.#map.removeLayer(layer);
+
+          const iconPng = L.icon({
+            iconUrl: `./assets/imgs/${inputType.value}.png`,
+            iconSize: [40, 40],
+            iconAnchor: [18, 41],
+            popupAnchor: [0, -41],
+          });
+
+          const [lng, lat] =
+            this.#workouts[workoutIndex].point.geometry.coordinates;
+
+          layer = L.marker([lat, lng], { icon: iconPng });
+
+          this.#workouts[workoutIndex].point.id =
+            this.#drawnItems.getLayerId(layer);
+
+          this.#drawnItems.addLayer(layer);
+
           this._renderWorkoutMarker(layer, this.#workouts[workoutIndex]);
         } else {
           workoutObj.distance = +inputDistance.value;
@@ -499,17 +533,17 @@ class App {
         this._showWorkoutList();
         this._hideForm();
         this.#currentForm = undefined;
-        this._setControlDraw(this.#drawControl, this.#disableDraw)
+        this._setControlDraw(this.#drawControl, this.#disableDraw);
       }
     } else {
       this._showWorkoutList();
       this._hideForm();
       this.#currentForm = undefined;
-      this._setControlDraw(this.#drawControl, this.#disableDraw)
+      this._setControlDraw(this.#drawControl, this.#disableDraw);
     }
   }
 
-  _setControlDraw(controlAdd, controlRemove){
+  _setControlDraw(controlAdd, controlRemove) {
     controlAdd.addTo(this.#map);
     controlRemove.remove();
   }
@@ -522,7 +556,7 @@ class App {
     this.#workouts.splice(workoutIndex, 1);
     workoutEl.remove();
     this._setLocalStorageWorkout();
-	if(this.#workouts.length === 0) startMsg.style.display = "block";
+    if (this.#workouts.length === 0) startMsg.style.display = "block";
   }
 
   _displayEditForm(workoutEl) {
@@ -728,8 +762,8 @@ class App {
       },
     });
   }
-  _fitWorkouts(){
-    const bounds = this.#drawnItems.getBounds().pad(0.10);
+  _fitWorkouts() {
+    const bounds = this.#drawnItems.getBounds().pad(0.1);
     this.#map.fitBounds(bounds);
   }
 
@@ -744,7 +778,7 @@ class App {
     const drawlayersData = JSON.parse(localStorage.getItem("drawlayers"));
 
     if (!drawlayersData) return;
-	
+
     drawlayersData.forEach((draw) => {
       L.geoJson(draw, {
         onEachFeature: function (feature, layer) {
@@ -763,16 +797,27 @@ class App {
     const workoutsData = JSON.parse(localStorage.getItem("workouts"));
     let workout;
 
-    if (!workoutsData || workoutsData.length === 0){
-		startMsg.style.display = "block";
-		return;
-	}
+    if (!workoutsData || workoutsData.length === 0) {
+      startMsg.style.display = "block";
+      return;
+    }
 
     workoutsData.forEach((work) => {
       L.geoJson(work.point, {
         onEachFeature: function (feature, layer) {
-          this.#drawnItems.addLayer(layer);
-          work.point.id = this.#drawnItems.getLayerId(layer);
+          const iconPng = L.icon({
+            iconUrl: `./assets/imgs/${work.type}.png`,
+            iconSize: [40, 40],
+            iconAnchor: [18, 41],
+            popupAnchor: [0, -41],
+          });
+
+          const { lat, lng } = layer.getLatLng();
+
+          const layerMarker = L.marker([lat, lng], { icon: iconPng });
+
+          this.#drawnItems.addLayer(layerMarker);
+          work.point.id = this.#drawnItems.getLayerId(layerMarker);
           if (work.type === "running")
             workout = new Running(
               work.distance,
@@ -789,7 +834,7 @@ class App {
               work.point
             );
           this.#workouts.push(workout);
-          this._renderWorkoutMarker(layer, workout);
+          this._renderWorkoutMarker(layerMarker, workout);
           this._insertWorkout(form, "afterend", workout);
         }.bind(this),
       });
@@ -815,7 +860,6 @@ class App {
   get workouts() {
     return this.#workouts;
   }
-
 }
 
 const app = new App();
