@@ -104,9 +104,6 @@ class App {
         polyline: this.#drawOptions,
         polygon: this.#drawOptions,
         rectangle: this.#drawOptions,
-        // marker: {
-        //   icon: null,
-        // }
       },
     });
 
@@ -247,7 +244,8 @@ class App {
     const google = L.tileLayer(
       "http://www.google.cn/maps/vt?lyrs=s@189&gl=cn&x={x}&y={y}&z={z}",
       {
-        attribution: "google",
+        attribution:
+          '&copy; <a href="http://www.google.com">Google</a>',
       }
     );
 
@@ -684,7 +682,7 @@ class App {
         })
       )
       .setPopupContent(
-        `${workout.type === "running" ? "🏃‍♂️" : "🚴‍♀️"} ${workout.description}`
+        `${workout.type === "running" ? "<img width='20' height='20' src='./assets/imgs/running.png'/>" : "<img width='20' height='20' src='./assets/imgs/cycling.png'/>"} ${workout.description}`
       )
       .openPopup();
   }
@@ -705,13 +703,13 @@ class App {
         <h2 class="workout__title">${workout.description}</h2>
         <div class="workout__details">
            <span class="workout__icon">${
-             workout.type === "running" ? "🏃‍♂️" : "🚴‍♀️"
+             workout.type === "running" ? "<img width='20' height='20' src='./assets/imgs/running.png'/>" : "<img width='20' height='20' src='./assets/imgs/cycling.png'/>"
            }</span> 
           <span class="workout__value">${workout.distance}</span>
           <span class="workout__unit">km</span>
         </div>
         <div class="workout__details">
-          <span class="workout__icon">⏱</span>
+          <span class="workout__icon"><img width='20' height='20' src='./assets/imgs/clock.png'/></span>
           <span class="workout__value">${workout.duration}</span>
           <span class="workout__unit">min</span>
         </div>
@@ -720,12 +718,12 @@ class App {
     if (workout.type === "running")
       html += `
         <div class="workout__details">
-           <span class="workout__icon">⚡️</span> 
+           <span class="workout__icon"><img width='20' height='20' src='./assets/imgs/lightning.png'/></span> 
           <span class="workout__value">${workout.pace.toFixed(1)}</span>
           <span class="workout__unit">min/km</span>
         </div>
         <div class="workout__details">
-           <span class="workout__icon">🦶🏼</span> 
+           <span class="workout__icon"><img width='20' height='20' src='./assets/imgs/feet.png'/></span> 
           <span class="workout__value">${workout.cadence}</span>
           <span class="workout__unit">spm</span>
         </div>
@@ -735,12 +733,12 @@ class App {
     if (workout.type === "cycling")
       html += `
         <div class="workout__details">
-           <span class="workout__icon">⚡️</span> 
+           <span class="workout__icon"><img width='20' height='20' src='./assets/imgs/lightning.png'/></span> 
           <span class="workout__value">${workout.speed.toFixed(1)}</span>
           <span class="workout__unit">km/h</span>
         </div>
         <div class="workout__details">
-          <span class="workout__icon">⛰</span>
+          <span class="workout__icon"><img width='20' height='20' src='./assets/imgs/elevation.png'/></span>
           <span class="workout__value">${workout.elevationGain}</span>
           <span class="workout__unit">m</span>
         </div>
