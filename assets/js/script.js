@@ -234,7 +234,7 @@ class App {
     const coords = [latitude, longitude];
 
     const osm = L.tileLayer(
-      "https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png",
+      "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
       {
         attribution:
           '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
@@ -242,7 +242,7 @@ class App {
     );
 
     const google = L.tileLayer(
-      "http://www.google.cn/maps/vt?lyrs=s@189&gl=cn&x={x}&y={y}&z={z}",
+      "http://www.google.com/maps/vt?lyrs=s@189&gl=cn&x={x}&y={y}&z={z}",
       {
         attribution:
           '&copy; <a href="http://www.google.com">Google</a>',
@@ -857,6 +857,12 @@ class App {
 
   get workouts() {
     return this.#workouts;
+  }
+
+  clickLayer(){
+    this.#drawnItems.on('click', function(e){
+      console.log(e.layer.toGeoJSON())
+    })
   }
 }
 
