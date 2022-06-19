@@ -73,7 +73,6 @@ const fitBtn = document.querySelector(".fit-workouts");
 
 class App {
   #map;
-  #mapZoomLevel = 13;
   #mapEvent;
   #workouts = [];
   #drawlayers = [];
@@ -247,7 +246,9 @@ class App {
       }
     );
 
-    this.#map = L.map("map").setView(coords, this.#mapZoomLevel);
+    this.#map = L.map("map", { center: new L.LatLng(latitude, longitude), zoom: 13 });
+
+
     this.#map.addLayer(this.#drawnItems);
 
     L.control
@@ -272,10 +273,10 @@ class App {
         `<label><div><span>Maps</span></div></label>`
       );
 
-    const reOpenpoup = (e) =>
+    const reOpenPoup = (e) =>
       this.#drawnItems.getLayers(e).forEach((l) => l.openPopup());
-    this.#map.on("draw:editstop", reOpenpoup);
-    this.#map.on("draw:deletestop", reOpenpoup);
+    this.#map.on("draw:editstop",  reOpenPoup);
+    this.#map.on("draw:deletestop",  reOpenPoup);
 
     this.#map.on(
       "draw:drawstop",
@@ -439,6 +440,8 @@ class App {
 
       // Set local storage to all workouts
       this._setLocalStorageWorkout();
+
+      this._setViewWorkout([lat, lng], 1, 13)
     }
 
     if (e.submitter.classList.contains("form__btn-cancel")) {
@@ -451,6 +454,8 @@ class App {
     this.#currentForm = undefined;
     this._setControlDraw(this.#drawControl, this.#disableDraw);
     if (this.#workouts.length === 0) startMsg.style.display = "block";
+
+
   }
 
   _editWorkout(e) {
@@ -685,6 +690,7 @@ class App {
 
       layer.off('click');
       layer.on('click', function(e){
+        this._setViewWorkout(e.target.getLatLng(), 1, 13);
         if(!e.target.isPopupOpen()) e.target.openPopup();
         const workoutId = this.#workouts.find(w => w.point.id === this.#drawnItems.getLayerId(e.target)).id;
         const [workoutEl] = Array.from(document.querySelectorAll('.workouts li')).filter(li => li.dataset.id === workoutId);
@@ -756,18 +762,23 @@ class App {
 
     selector.insertAdjacentHTML(pos, html);
   }
+
+  _setViewWorkout(coords, panDuration, zoomLevel){
+    this.#map.setView(coords, zoomLevel, {
+      animate: true,
+      pan: {
+        duration: panDuration,
+      },
+    });
+  }
+
   _moveToPopup(workoutEl) {
     const workout = this.#workouts.find(
       (work) => work.id === workoutEl.dataset.id
     );
 
     const [lng, lat] = workout.point.geometry.coordinates;
-    this.#map.setView([lat, lng], this.#mapZoomLevel, {
-      animate: true,
-      pan: {
-        duration: 1,
-      },
-    });
+    this._setViewWorkout([lat, lng], 1, 13);
   }
   _fitWorkouts() {
     const bounds = this.#drawnItems.getBounds().pad(0.1);
@@ -819,9 +830,7 @@ class App {
             popupAnchor: [0, -41],
           });
 
-          const { lat, lng } = layer.getLatLng();
-
-          const layerMarker = L.marker([lat, lng], { icon: iconPng });
+          const layerMarker = L.marker(layer.getLatLng(), { icon: iconPng });
 
           this.#drawnItems.addLayer(layerMarker);
           work.point.id = this.#drawnItems.getLayerId(layerMarker);
