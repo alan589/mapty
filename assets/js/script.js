@@ -73,6 +73,7 @@ const fitBtn = document.querySelector(".fit-workouts");
 
 class App {
   #map;
+  #mapZoomLevel = 13;
   #mapEvent;
   #workouts = [];
   #drawlayers = [];
@@ -246,7 +247,7 @@ class App {
       }
     );
 
-    this.#map = L.map("map", { center: new L.LatLng(latitude, longitude), zoom: 13 });
+    this.#map = L.map("map", { center: new L.LatLng(latitude, longitude), zoom: this.#mapZoomLevel });
 
 
     this.#map.addLayer(this.#drawnItems);
@@ -441,7 +442,7 @@ class App {
       // Set local storage to all workouts
       this._setLocalStorageWorkout();
 
-      this._setViewWorkout([lat, lng], 1, 13)
+      this._setViewWorkout([lat, lng], 1)
     }
 
     if (e.submitter.classList.contains("form__btn-cancel")) {
@@ -688,9 +689,57 @@ class App {
       )
       .openPopup();
 
+
+      let html = `
+        <li class="workout-tooltip">
+          <div class="workout__details">
+             <span><img class="tooltip__icon" src="./assets/imgs/${workout.type}.png"></span> 
+            <span class="tooltip__value">${workout.distance}</span>
+            <span class="tooltip__unit">km</span>
+          </div>
+          <div class="workout__details">
+            <span><img class="tooltip__icon" src="./assets/imgs/clock.png"></span>
+            <span class="tooltip__value">${workout.duration}</span>
+            <span class="tooltip__unit">min</span>
+          </div>
+      `;
+
+      if (workout.type === "running")
+      html += `
+        <div class="workout__details">
+             <span><img class="tooltip__icon" src="./assets/imgs/lightning.png"></span> 
+            <span class="tooltip__value">${workout.pace.toFixed(1)}</span>
+            <span class="tooltip__unit">min/km</span>
+          </div>
+          <div class="workout__details">
+             <span><img class="tooltip__icon" src="./assets/imgs/feet.png"></span> 
+            <span class="tooltip__value">${workout.cadence}</span>
+            <span class="tooltip__unit">spm</span>
+          </div>
+        </li>
+      `;
+
+    if (workout.type === "cycling")
+      html += `
+        <div class="workout__details">
+             <span><img class="tooltip__icon" src="./assets/imgs/lightning.png"></span> 
+            <span class="tooltip__value">${workout.speed.toFixed(1)}</span>
+            <span class="tooltip__unit">km/h</span>
+          </div>
+          <div class="workout__details">
+             <span><img class="tooltip__icon" src="./assets/imgs/elevation.png"></span> 
+            <span class="tooltip__value">${workout.elevationGain}</span>
+            <span class="tooltip__unit">m</span>
+          </div>
+        </li>
+      `;
+
+      layer.bindTooltip(L.tooltip({className: 'tooltip-bg', opacity: 1, pane:'popupPane'}))
+        .setTooltipContent(html);
+
       layer.off('click');
       layer.on('click', function(e){
-        this._setViewWorkout(e.target.getLatLng(), 1, 13);
+        this._setViewWorkout(e.target.getLatLng(), 1);
         if(!e.target.isPopupOpen()) e.target.openPopup();
         const workoutId = this.#workouts.find(w => w.point.id === this.#drawnItems.getLayerId(e.target)).id;
         const [workoutEl] = Array.from(document.querySelectorAll('.workouts li')).filter(li => li.dataset.id === workoutId);
@@ -699,6 +748,7 @@ class App {
         workoutEl.classList.add('workout-hover');
         setTimeout(() => workoutEl.classList.remove('workout-hover'), 1000)
       }.bind(this));
+
   }
 
  
@@ -717,14 +767,14 @@ class App {
         <span class="workout__edit">...</span>
         <h2 class="workout__title">${workout.description}</h2>
         <div class="workout__details">
-           <span class="workout__icon">${
+           <span>${
              workout.type === "running" ? "<img class='workout__icon' src='./assets/imgs/running.png'/>" : "<img class='workout__icon' src='./assets/imgs/cycling.png'/>"
            }</span> 
           <span class="workout__value">${workout.distance}</span>
           <span class="workout__unit">km</span>
         </div>
         <div class="workout__details">
-          <span class="workout__icon"><img class='workout__icon' src='./assets/imgs/clock.png'/></span>
+          <span><img class='workout__icon' src='./assets/imgs/clock.png'/></span>
           <span class="workout__value">${workout.duration}</span>
           <span class="workout__unit">min</span>
         </div>
@@ -733,12 +783,12 @@ class App {
     if (workout.type === "running")
       html += `
         <div class="workout__details">
-           <span class="workout__icon"><img class='workout__icon' src='./assets/imgs/lightning.png'/></span> 
+           <span><img class='workout__icon' src='./assets/imgs/lightning.png'/></span> 
           <span class="workout__value">${workout.pace.toFixed(1)}</span>
           <span class="workout__unit">min/km</span>
         </div>
         <div class="workout__details">
-           <span class="workout__icon"><img class='workout__icon' src='./assets/imgs/feet.png'/></span> 
+           <span><img class='workout__icon' src='./assets/imgs/feet.png'/></span> 
           <span class="workout__value">${workout.cadence}</span>
           <span class="workout__unit">spm</span>
         </div>
@@ -748,12 +798,12 @@ class App {
     if (workout.type === "cycling")
       html += `
         <div class="workout__details">
-           <span class="workout__icon"><img class='workout__icon' src='./assets/imgs/lightning.png'/></span> 
+           <span><img class='workout__icon' src='./assets/imgs/lightning.png'/></span> 
           <span class="workout__value">${workout.speed.toFixed(1)}</span>
           <span class="workout__unit">km/h</span>
         </div>
         <div class="workout__details">
-          <span class="workout__icon"><img class='workout__icon' src='./assets/imgs/elevation.png'/></span>
+          <span><img class='workout__icon' src='./assets/imgs/elevation.png'/></span>
           <span class="workout__value">${workout.elevationGain}</span>
           <span class="workout__unit">m</span>
         </div>
@@ -763,7 +813,7 @@ class App {
     selector.insertAdjacentHTML(pos, html);
   }
 
-  _setViewWorkout(coords, panDuration, zoomLevel){
+  _setViewWorkout(coords, panDuration, zoomLevel = this.#mapZoomLevel){
     this.#map.setView(coords, zoomLevel, {
       animate: true,
       pan: {
@@ -778,7 +828,7 @@ class App {
     );
 
     const [lng, lat] = workout.point.geometry.coordinates;
-    this._setViewWorkout([lat, lng], 1, 13);
+    this._setViewWorkout([lat, lng], 1);
   }
   _fitWorkouts() {
     const bounds = this.#drawnItems.getBounds().pad(0.1);
@@ -881,12 +931,6 @@ class App {
 
   get workouts() {
     return this.#workouts;
-  }
-
-  clickL(){
-    this.#drawnItems.on('click', function(e){
-      console.log(e.target.getLayers())
-    })
   }
 
 }
