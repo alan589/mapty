@@ -72,7 +72,11 @@ body {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr 1fr;
   gap: 0.75rem 1.5rem;
-  transition: all 0.2s;
+  transition: all 0.2s, background-color 0.5s;
+}
+
+.workout-hover {
+  background-color: #636b73;
 }
 
 .workout--running {
@@ -98,8 +102,6 @@ body {
   width: 20px;
   height: 20px;
 }
-
-
 
 .workout__value {
   font-size: 1.5rem;

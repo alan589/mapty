@@ -222,10 +222,8 @@ class App {
         }
       );
   }
-
+  
   _loadMap(position) {
-    // drawControl.options.draw.polyline.shapeOptions.color = '#0000FF';
-
     const { latitude } = position.coords;
     const { longitude } = position.coords;
 
@@ -330,7 +328,6 @@ class App {
               );
               workout.point = layerJSON;
               workout.point.id = layerID;
-              // layer.openPopup();
               this._setLocalStorageWorkout();
             } else {
               this.#drawnItems.addLayer(layer);
@@ -685,15 +682,27 @@ class App {
         `${workout.type === "running" ? "<img class='workout__icon' src='./assets/imgs/running.png'/>" : "<img class='workout__icon' src='./assets/imgs/cycling.png'/>"} ${workout.description}`
       )
       .openPopup();
+
+      layer.off('click');
+      layer.on('click', function(e){
+        if(!e.target.isPopupOpen()) e.target.openPopup();
+        const workoutId = this.#workouts.find(w => w.point.id === this.#drawnItems.getLayerId(e.target)).id;
+        const [workoutEl] = Array.from(document.querySelectorAll('.workouts li')).filter(li => li.dataset.id === workoutId);
+        workoutEl.focus();
+        workoutEl.blur();
+        workoutEl.classList.add('workout-hover');
+        setTimeout(() => workoutEl.classList.remove('workout-hover'), 1000)
+      }.bind(this));
   }
 
-  _deleteWorkoutList() {
+ 
+ _deleteWorkoutList() {
     document.querySelectorAll(".workouts li").forEach((l) => l.remove());
   }
 
   _insertWorkout(selector, pos, workout) {
     let html = `
-      <li class="workout workout--${workout.type}" data-id="${workout.id}">
+      <li class="workout workout--${workout.type}" data-id="${workout.id}" tabindex="0">
         <div class="workout__popup hidden">
           <p class="edit">Edit</p>
           <p class="delete">Delete</p>
@@ -855,15 +864,22 @@ class App {
     location.reload();
   }
 
+  _setDrawColor(color){
+    this.#drawControl.options.draw.polyline.shapeOptions.color = color;
+    this.#drawControl.options.draw.polygon.shapeOptions.color = color;
+    this.#drawControl.options.draw.rectangle.shapeOptions.color = color;
+  }
+
   get workouts() {
     return this.#workouts;
   }
 
-  clickLayer(){
+  clickL(){
     this.#drawnItems.on('click', function(e){
-      console.log(e.layer.toGeoJSON())
+      console.log(e.target.getLayers())
     })
   }
+
 }
 
 const app = new App();
