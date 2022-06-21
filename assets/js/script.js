@@ -121,6 +121,7 @@ class App {
     // Attach event handlers
     deleteAllBtn.addEventListener(
       "click",
+
       this._displayConfirmationForm.bind(this)
     );
 
@@ -222,7 +223,7 @@ class App {
         }
       );
   }
-  
+
   _loadMap(position) {
     const { latitude } = position.coords;
     const { longitude } = position.coords;
@@ -242,13 +243,14 @@ class App {
     const google = L.tileLayer(
       "http://www.google.com/maps/vt?lyrs=s@189&gl=cn&x={x}&y={y}&z={z}",
       {
-        attribution:
-          '&copy; <a href="http://www.google.com">Google</a>',
+        attribution: '&copy; <a href="http://www.google.com">Google</a>',
       }
     );
 
-    this.#map = L.map("map", { center: new L.LatLng(latitude, longitude), zoom: this.#mapZoomLevel });
-
+    this.#map = L.map("map", {
+      center: new L.LatLng(latitude, longitude),
+      zoom: this.#mapZoomLevel,
+    });
 
     this.#map.addLayer(this.#drawnItems);
 
@@ -276,8 +278,8 @@ class App {
 
     const reOpenPoup = (e) =>
       this.#drawnItems.getLayers(e).forEach((l) => l.openPopup());
-    this.#map.on("draw:editstop",  reOpenPoup);
-    this.#map.on("draw:deletestop",  reOpenPoup);
+    this.#map.on("draw:editstop", reOpenPoup);
+    this.#map.on("draw:deletestop", reOpenPoup);
 
     this.#map.on(
       "draw:drawstop",
@@ -370,6 +372,7 @@ class App {
               this.#workouts.splice(workoutIndex, 1);
               workoutEl.remove();
               this._setLocalStorageWorkout();
+              if (this.#workouts.length === 0) startMsg.style.display = "block";
             } else {
               const drawIndex = this.#drawlayers.findIndex(
                 (d) => d.id === layerID
@@ -442,7 +445,7 @@ class App {
       // Set local storage to all workouts
       this._setLocalStorageWorkout();
 
-      this._setViewWorkout([lat, lng], 1)
+      this._setViewWorkout([lat, lng], 1);
     }
 
     if (e.submitter.classList.contains("form__btn-cancel")) {
@@ -455,8 +458,6 @@ class App {
     this.#currentForm = undefined;
     this._setControlDraw(this.#drawControl, this.#disableDraw);
     if (this.#workouts.length === 0) startMsg.style.display = "block";
-
-
   }
 
   _editWorkout(e) {
@@ -521,6 +522,11 @@ class App {
             workoutObj.elevationGain = +inputElevation.value;
             workoutObj.calcSpeed();
           }
+
+          this._setTooltip(
+            workoutObj,
+            this.#drawnItems.getLayer(this.#workouts[workoutIndex].point.id)
+          );
         }
 
         this._setLocalStorageWorkout();
@@ -673,24 +679,8 @@ class App {
     return true;
   }
 
-  _renderWorkoutMarker(layer, workout) {
-    layer
-      .bindPopup(
-        L.popup({
-          maxWidth: 250,
-          minWidth: 100,
-          autoClose: false,
-          closeOnClick: false,
-          className: `${workout.type}-popup`,
-        })
-      )
-      .setPopupContent(
-        `${workout.type === "running" ? "<img class='workout__icon' src='./assets/imgs/running.png'/>" : "<img class='workout__icon' src='./assets/imgs/cycling.png'/>"} ${workout.description}`
-      )
-      .openPopup();
-
-
-      let html = `
+  _setTooltip(workout, layer) {
+    let html = `
         <li class="workout-tooltip">
           <div class="workout__details">
              <span><img class="tooltip__icon" src="./assets/imgs/${workout.type}.png"></span> 
@@ -704,7 +694,7 @@ class App {
           </div>
       `;
 
-      if (workout.type === "running")
+    if (workout.type === "running")
       html += `
         <div class="workout__details">
              <span><img class="tooltip__icon" src="./assets/imgs/lightning.png"></span> 
@@ -734,31 +724,67 @@ class App {
         </li>
       `;
 
-      layer.bindTooltip(L.tooltip({className: 'tooltip-bg', opacity: 1, pane:'popupPane'}))
-        .setTooltipContent(html);
-
-      layer.off('click');
-      layer.on('click', function(e){
-        this._setViewWorkout(e.target.getLatLng(), 1);
-        if(!e.target.isPopupOpen()) e.target.openPopup();
-        const workoutId = this.#workouts.find(w => w.point.id === this.#drawnItems.getLayerId(e.target)).id;
-        const [workoutEl] = Array.from(document.querySelectorAll('.workouts li')).filter(li => li.dataset.id === workoutId);
-        workoutEl.focus();
-        workoutEl.blur();
-        workoutEl.classList.add('workout-hover');
-        setTimeout(() => workoutEl.classList.remove('workout-hover'), 1000)
-      }.bind(this));
-
+    layer
+      .bindTooltip(
+        L.tooltip({ className: "tooltip-bg", opacity: 1, pane: "popupPane" })
+      )
+      .setTooltipContent(html);
   }
 
- 
- _deleteWorkoutList() {
+  _setPopup(workout, layer) {
+    layer
+      .bindPopup(
+        L.popup({
+          maxWidth: 250,
+          minWidth: 100,
+          autoClose: false,
+          closeOnClick: false,
+          className: `${workout.type}-popup`,
+        })
+      )
+      .setPopupContent(
+        `${
+          workout.type === "running"
+            ? "<img class='workout__icon' src='./assets/imgs/running.png'/>"
+            : "<img class='workout__icon' src='./assets/imgs/cycling.png'/>"
+        } ${workout.description}`
+      )
+      .openPopup();
+  }
+
+  _renderWorkoutMarker(layer, workout) {
+    this._setPopup(workout, layer);
+    this._setTooltip(workout, layer);
+
+    layer.off("click");
+    layer.on(
+      "click",
+      function (e) {
+        this.#map.panTo(e.target.getLatLng());
+        if (!e.target.isPopupOpen()) e.target.openPopup();
+        const workoutId = this.#workouts.find(
+          (w) => w.point.id === this.#drawnItems.getLayerId(e.target)
+        ).id;
+        const [workoutEl] = Array.from(
+          document.querySelectorAll(".workouts li")
+        ).filter((li) => li.dataset.id === workoutId);
+        workoutEl.focus();
+        workoutEl.blur();
+        workoutEl.classList.add("workout-hover");
+        setTimeout(() => workoutEl.classList.remove("workout-hover"), 1000);
+      }.bind(this)
+    );
+  }
+
+  _deleteWorkoutList() {
     document.querySelectorAll(".workouts li").forEach((l) => l.remove());
   }
 
   _insertWorkout(selector, pos, workout) {
     let html = `
-      <li class="workout workout--${workout.type}" data-id="${workout.id}" tabindex="0">
+      <li class="workout workout--${workout.type}" data-id="${
+      workout.id
+    }" tabindex="0">
         <div class="workout__popup hidden">
           <p class="edit">Edit</p>
           <p class="delete">Delete</p>
@@ -768,7 +794,9 @@ class App {
         <h2 class="workout__title">${workout.description}</h2>
         <div class="workout__details">
            <span>${
-             workout.type === "running" ? "<img class='workout__icon' src='./assets/imgs/running.png'/>" : "<img class='workout__icon' src='./assets/imgs/cycling.png'/>"
+             workout.type === "running"
+               ? "<img class='workout__icon' src='./assets/imgs/running.png'/>"
+               : "<img class='workout__icon' src='./assets/imgs/cycling.png'/>"
            }</span> 
           <span class="workout__value">${workout.distance}</span>
           <span class="workout__unit">km</span>
@@ -813,7 +841,7 @@ class App {
     selector.insertAdjacentHTML(pos, html);
   }
 
-  _setViewWorkout(coords, panDuration, zoomLevel = this.#mapZoomLevel){
+  _setViewWorkout(coords, panDuration, zoomLevel = this.#mapZoomLevel) {
     this.#map.setView(coords, zoomLevel, {
       animate: true,
       pan: {
@@ -923,7 +951,7 @@ class App {
     location.reload();
   }
 
-  _setDrawColor(color){
+  _setDrawColor(color) {
     this.#drawControl.options.draw.polyline.shapeOptions.color = color;
     this.#drawControl.options.draw.polygon.shapeOptions.color = color;
     this.#drawControl.options.draw.rectangle.shapeOptions.color = color;
@@ -932,7 +960,6 @@ class App {
   get workouts() {
     return this.#workouts;
   }
-
 }
 
 const app = new App();
