@@ -1,7 +1,7 @@
 "use strict";
 
 class Workout {
-  date = new Date();
+  _date = new Date();
   id = (Date.now() + "").slice(-10);
   point;
 
@@ -11,14 +11,29 @@ class Workout {
     this.point = point;
   }
 
-  _setDescription() {
+  _description() {
     // prettier-ignore
     const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
-    this.description = `${this.type[0].toUpperCase()}${this.type.slice(1)} on ${
-      months[this.date.getMonth()]
-    } ${this.date.getDate()}`;
+    this._description = `${this.type[0].toUpperCase()}${this.type.slice(1)} on ${
+      months[this._date.getMonth()]
+    } ${this._date.getDate()}`;
   }
+  set description(description){
+    this._description = description;
+  }
+  get description(){
+    return this._description;
+  }
+
+  set date(date){
+    this._date = date;
+  }
+
+  get date(){
+    return this._date;
+  }
+
 }
 
 class Running extends Workout {
@@ -28,7 +43,7 @@ class Running extends Workout {
     super(distance, duration, point);
     this.cadence = cadence;
     this.calcPace();
-    this._setDescription();
+    this._description();
   }
 
   calcPace() {
@@ -45,7 +60,7 @@ class Cycling extends Workout {
     super(distance, duration, point);
     this.elevationGain = elevationGain;
     this.calcSpeed();
-    this._setDescription();
+    this._description();
   }
 
   calcSpeed() {
@@ -148,7 +163,7 @@ class App {
           if (sortOption.value === "type")
             this.#workouts.sort((a, b) => (a.type < b.type ? 1 : -1));
           if (sortOption.value === "date")
-            this.#workouts.sort((a, b) => a.date - b.date);
+            this.#workouts.sort((a, b) => (a.date < b.date ? 1 : -1));
           if (sortOption.value === "duration")
             this.#workouts.sort((a, b) => a.duration - b.duration);
           this.#sortedAsc = true;
@@ -159,7 +174,7 @@ class App {
           if (sortOption.value === "type")
             this.#workouts.sort((a, b) => (a.type > b.type ? 1 : -1));
           if (sortOption.value === "date")
-            this.#workouts.sort((a, b) => b.date - a.date);
+            this.#workouts.sort((a, b) => (a.date > b.date ? 1 : -1));
           if (sortOption.value === "duration")
             this.#workouts.sort((a, b) => b.duration - a.duration);
           this.#sortedAsc = false;
@@ -215,13 +230,33 @@ class App {
   }
 
   _getPosition() {
-    if (navigator.geolocation)
-      navigator.geolocation.getCurrentPosition(
-        this._loadMap.bind(this),
-        function () {
-          alert("Could not get your position");
-        }
-      );
+    // if (navigator.geolocation)
+    //   navigator.geolocation.getCurrentPosition(
+    //     this._loadMap.bind(this),
+    //     function () {
+    //       alert("Could not get your position");
+    //     }
+    //   );
+
+    // promisifying the geolocation
+    // const getPosition = function() {
+    //   return new Promise(function(resolve, reject){
+    //     navigator.geolocation.getCurrentPosition(resolve, err => reject("Could not get your position"));
+    //   })
+    // }
+    // getPosition()
+    // .then(pos => this._loadMap(pos))
+    // .catch(err => alert(err))
+
+
+    // async / await version
+    const getPosition = async function() {
+      const pos = await new Promise(function(resolve, reject){
+        navigator.geolocation.getCurrentPosition(resolve, err => reject("Could not get your position"));
+      })
+      this._loadMap(pos)
+    }
+    getPosition.bind(this)();
   }
 
   _loadMap(position) {
@@ -445,7 +480,7 @@ class App {
       // Set local storage to all workouts
       this._setLocalStorageWorkout();
 
-      this._setViewWorkout([lat, lng], 1);
+      this.#map.panTo([lat, lng]);
     }
 
     if (e.submitter.classList.contains("form__btn-cancel")) {
@@ -927,6 +962,10 @@ class App {
               work.elevationGain,
               work.point
             );
+
+          workout.date = work._date;
+          workout.description = work._description;
+
           this.#workouts.push(workout);
           this._renderWorkoutMarker(layerMarker, workout);
           this._insertWorkout(form, "afterend", workout);
