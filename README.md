@@ -1,8 +1,7 @@
 # About
-Aplicativo web feito durante o curso [The Complete JavaScript Course](https://www.udemy.com/course/the-complete-javascript-course/) com algumas 
-funcionalidades novas implementadas por mim
+Web application made during [The Complete JavaScript Course](https://www.udemy.com/course/the-complete-javascript-course/) with some new features implemented by me.
 
-A aplicação consiste em mapear exercícios através de um mapa interativo
+The application consists of mapping exercises through an interactive map.
 
 ## Overview
 
@@ -38,9 +37,14 @@ A aplicação consiste em mapear exercícios através de um mapa interativo
 ### Useful Resources
 - [Leaflet](https://leafletjs.com/) - an open-source JavaScript library for mobile-friendly interactive maps
 - [Leaflet Draw](https://leaflet.github.io/Leaflet.draw/docs/leaflet-draw-latest.html) - Leaflet's plugin, helped me to drawing geometric shapes on the map
+- [Flaticon](https://www.flaticon.com/) - Useful free icons
 
 ## Author
 
-- Linkedin - [Alan cavalcante](https://www.linkedin.com/in/alan-cavalcante-382051206/)
+- Linkedin - [Alan cavalcante](https://www.linkedin.com/in/alan--cavalcante/)
+
+## Acknowledgments
+
+Thanks to [Jonas Schmedtmann](https://github.com/jonasschmedtmann). This project is based on his [mapty project](https://mapty.netlify.app/)
 
 
