@@ -17,8 +17,9 @@ class Workout {
   _setDescription() {
     // prettier-ignore
     const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-	let location = !this.address.suburb ? this.address.city : this.address.suburb;
+	let location = !this.address.suburb ? this.address.city: this.address.suburb;
 	if(location === undefined) location = '';
+	else location += ', ';
 	this._description = `${this.type === 'running' ? 'Run' : 'Cycle'} in ${location} ${
 	this.address.country} on ${months[this._date.getMonth()]} ${this._date.getDate()}`;
   }
@@ -130,6 +131,14 @@ class App {
       },
       draw: false,
     });
+	const iconPng = L.icon({
+            iconUrl: `./assets/imgs/icon.png`,
+            iconSize: [40, 40],
+            iconAnchor: [18, 41],
+            popupAnchor: [0, -41],
+     });
+	 
+	L.Marker.prototype.options.icon = iconPng;
 
     // Get user's position
     this._getPosition();
@@ -436,28 +445,21 @@ class App {
         return;
       }
 
-      const iconPng = L.icon({
-        iconUrl: `./assets/imgs/${inputType.value}.png`,
-        iconSize: [40, 40],
-        iconAnchor: [18, 41],
-        popupAnchor: [0, -41],
-      });
-
       const { lat, lng } = this.#mapEvent.layer.getLatLng();
 
-      const layer = L.marker([lat, lng], { icon: iconPng });
+      const layer = L.marker([lat, lng]);
       this.#drawnItems.addLayer(layer);
 
       const pointJSON = layer.toGeoJSON();
       pointJSON.id = this.#drawnItems.getLayerId(layer);
 	  
 	  // get weather data from api
-	  this._getJson(`http://www.7timer.info/bin/api.pl?lon=${lng}&lat=${lat}&product=civillight&output=json`)
+	  this._getJson(`https://www.7timer.info/bin/api.pl?lon=${lng}&lat=${lat}&product=civillight&output=json`)
 	  .then(data => {
 		const weather = data.dataseries[0].weather;
 		
 		// get location data from api
-		this._getJson(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18`)
+		this._getJson(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&accept-language=en-US`)
 		.then(data => {
 			const {suburb, country, city} = data.address;
 			console.log(suburb, country, city);
@@ -565,17 +567,11 @@ class App {
           layer.closePopup();
           this.#map.removeLayer(layer);
 
-          const iconPng = L.icon({
-            iconUrl: `./assets/imgs/${inputType.value}.png`,
-            iconSize: [40, 40],
-            iconAnchor: [18, 41],
-            popupAnchor: [0, -41],
-          });
 
           const [lng, lat] =
             this.#workouts[workoutIndex].point.geometry.coordinates;
 
-          layer = L.marker([lat, lng], { icon: iconPng });
+          layer = L.marker([lat, lng]);
 
           this.#workouts[workoutIndex].point.id =
             this.#drawnItems.getLayerId(layer);
@@ -973,14 +969,8 @@ class App {
     workoutsData.forEach((work) => {
       L.geoJson(work.point, {
         onEachFeature: function (feature, layer) {
-          const iconPng = L.icon({
-            iconUrl: `./assets/imgs/${work.type}.png`,
-            iconSize: [40, 40],
-            iconAnchor: [18, 41],
-            popupAnchor: [0, -41],
-          });
-
-          const layerMarker = L.marker(layer.getLatLng(), { icon: iconPng });
+         
+          const layerMarker = L.marker(layer.getLatLng());
 
           this.#drawnItems.addLayer(layerMarker);
           work.point.id = this.#drawnItems.getLayerId(layerMarker);
