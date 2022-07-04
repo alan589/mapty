@@ -5,28 +5,24 @@ class Workout {
   id = (Date.now() + "").slice(-10);
   point;
   weather;
-
-  constructor(distance, duration, point, weather) {
+ 
+  constructor(distance, duration, point, weather, address) {
     this.distance = distance; // in km
     this.duration = duration; // in min
     this.point = point;
 	this.weather = weather;
+	this.address = address;
   }
 
-  _description() {
-	// Run in Bangu, Brasil on July 1
+  _setDescription() {
     // prettier-ignore
     const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-
-    this._description = `${this.type[0].toUpperCase()}${this.type.slice(1)} in ${
-      months[this._date.getMonth()]
-    } ${this._date.getDate()}`;
-	
-	//this._description = ``;
+	let location = !this.address.suburb ? this.address.city : this.address.suburb;
+	if(location === undefined) location = '';
+	this._description = `${this.type === 'running' ? 'Run' : 'Cycle'} in ${location} ${
+	this.address.country} on ${months[this._date.getMonth()]} ${this._date.getDate()}`;
   }
-  set description(description){
-    this._description = description;
-  }
+  
   get description(){
     return this._description;
   }
@@ -44,11 +40,11 @@ class Workout {
 class Running extends Workout {
   type = "running";
 
-  constructor(distance, duration, cadence, point, weather) {
-    super(distance, duration, point, weather);
+  constructor(distance, duration, cadence, point, weather, description) {
+    super(distance, duration, point, weather, description);
     this.cadence = cadence;
     this.calcPace();
-    this._description();
+    this._setDescription();
   }
 
   calcPace() {
@@ -61,11 +57,11 @@ class Running extends Workout {
 class Cycling extends Workout {
   type = "cycling";
 
-  constructor(distance, duration, elevationGain, point, weather) {
-    super(distance, duration, point, weather);
+  constructor(distance, duration, elevationGain, point, weather, description) {
+    super(distance, duration, point, weather, description);
     this.elevationGain = elevationGain;
     this.calcSpeed();
-    this._description();
+    this._setDescription();
   }
 
   calcSpeed() {
@@ -458,52 +454,50 @@ class App {
 	  // get weather data from api
 	  this._getJson(`http://www.7timer.info/bin/api.pl?lon=${lng}&lat=${lat}&product=civillight&output=json`)
 	  .then(data => {
-		console.log('1');
 		const weather = data.dataseries[0].weather;
 		
+		// get location data from api
 		this._getJson(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18`)
-		.then(data => console.log(data));
-		
-		
-		
+		.then(data => {
+			const {suburb, country, city} = data.address;
+			console.log(suburb, country, city);
+			// If workout running, create running object
+			  if (inputType.value === "running")
+				workout = new Running(
+				  +inputDistance.value,
+				  +inputDuration.value,
+				  +inputCadence.value,
+				  pointJSON,
+				  weather,
+				  {suburb, country, city}
+				);
 
-		
-		// If workout running, create running object
-		  if (inputType.value === "running")
-			workout = new Running(
-			  +inputDistance.value,
-			  +inputDuration.value,
-			  +inputCadence.value,
-			  pointJSON,
-			  weather
-			);
+			// If workout cycling, create cycling object
+			  if (inputType.value === "cycling")
+				workout = new Cycling(
+				  +inputDistance.value,
+				  +inputDuration.value,
+				  +inputElevation.value,
+				  pointJSON,
+				  weather,
+				  {suburb, country, city}
+				);
 
-		// If workout cycling, create cycling object
-		  if (inputType.value === "cycling")
-			workout = new Cycling(
-			  +inputDistance.value,
-			  +inputDuration.value,
-			  +inputElevation.value,
-			  pointJSON,
-			  weather
-			);
+			// Add new object to workout array
+			  this.#workouts.push(workout);
+
 			
-			console.log('2');
-
-		// Add new object to workout array
-		  this.#workouts.push(workout);
-
-		
-		// Render workout on list
-		console.log('3');
-		  this._insertWorkout(form, "afterend", workout);
-		  this.#map.panTo([lat, lng]);
+			// Render workout on list
+			  this._insertWorkout(form, "afterend", workout);
+			  this.#map.panTo([lat, lng]);
+				
+			this._renderWorkoutMarker(layer, workout);
+			// Set local storage to all workouts
+			this._setLocalStorageWorkout();
 			
-		this._renderWorkoutMarker(layer, workout);
-		// Set local storage to all workouts
-		this._setLocalStorageWorkout();
-		
-		this._resetForm();
+			this._resetForm();
+		});
+
 	  })
 	  .catch(err => alert(err)); 
     }
@@ -824,12 +818,10 @@ class App {
         `<div class='popup__flex'>${
           workout.type === "running"
             ? "<img class='workout__icon-popup' src='./assets/imgs/running.png'/>"
-            : "<img class=workout__icon-popup' src='./assets/imgs/cycling.png'/>"
-        } ${workout.description} <img class='workout__weather' src='./assets/imgs/${workout.weather}.png'/></div>`
+            : "<img class='workout__icon-popup' src='./assets/imgs/cycling.png'/>"
+        } <p class="popup__text">${workout.description}</p> <img class='workout__weather' src='./assets/imgs/${workout.weather}.png'/></div>`
       )
       .openPopup();
-	  
-	  console.log(workout.weather);
   }
 
   _renderWorkoutMarker(layer, workout) {
@@ -979,7 +971,6 @@ class App {
     }
 
     workoutsData.forEach((work) => {
-		console.log(work);
       L.geoJson(work.point, {
         onEachFeature: function (feature, layer) {
           const iconPng = L.icon({
@@ -999,7 +990,8 @@ class App {
               work.duration,
               work.cadence,
               work.point,
-			  work.weather
+			  work.weather,
+			  work.address
             );
 
           if (work.type === "cycling")
@@ -1008,11 +1000,12 @@ class App {
               work.duration,
               work.elevationGain,
               work.point,
-			  work.weather
+			  work.weather,
+			  work.address
             );
 
           workout.date = work._date;
-          workout.description = work._description;
+          
 
           this.#workouts.push(workout);
           this._renderWorkoutMarker(layerMarker, workout);

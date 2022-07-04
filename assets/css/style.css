@@ -84,7 +84,10 @@ body {
   background-color: var(--color-dark--2);
 }
 
-
+.popup__text {
+	
+    text-align: center;
+}
 .popup__flex {
 	display: flex;
 	align-items: center;
@@ -367,6 +370,14 @@ body {
 }
 .leaflet-tooltip-left:before {
   border-left-color: var(--color-dark--2);
+}
+
+.leaflet-popup-content p {
+    margin: 0;
+}
+
+.leaflet-popup-content {
+    margin: 5px 12px;
 }
 
 .buttons {
