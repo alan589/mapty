@@ -5,37 +5,41 @@ class Workout {
   id = (Date.now() + "").slice(-10);
   point;
   weather;
- 
+
   constructor(distance, duration, point, weather, address) {
     this.distance = distance; // in km
     this.duration = duration; // in min
     this.point = point;
-	this.weather = weather;
-	this.address = address;
+    this.weather = weather;
+    this.address = address;
   }
 
-  _setDescription() {
+  _description() {
     // prettier-ignore
     const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-	let location = !this.address.suburb ? this.address.city: this.address.suburb;
-	if(location === undefined) location = '';
-	else location += ', ';
-	this._description = `${this.type === 'running' ? 'Run' : 'Cycle'} in ${location} ${
-	this.address.country} on ${months[this._date.getMonth()]} ${this._date.getDate()}`;
+    let location = !this.address.suburb
+      ? this.address.city
+      : this.address.suburb;
+    if (location === undefined) location = "";
+    else location += ", ";
+    this._description = `${
+      this.type === "running" ? "Run" : "Cycle"
+    } in ${location} ${this.address.country} on ${
+      months[this._date.getMonth()]
+    } ${this._date.getDate()}`;
   }
-  
-  get description(){
+
+  get description() {
     return this._description;
   }
 
-  set date(date){
+  set date(date) {
     this._date = date;
   }
 
-  get date(){
+  get date() {
     return this._date;
   }
-
 }
 
 class Running extends Workout {
@@ -45,7 +49,7 @@ class Running extends Workout {
     super(distance, duration, point, weather, description);
     this.cadence = cadence;
     this.calcPace();
-    this._setDescription();
+    this._description();
   }
 
   calcPace() {
@@ -62,7 +66,7 @@ class Cycling extends Workout {
     super(distance, duration, point, weather, description);
     this.elevationGain = elevationGain;
     this.calcSpeed();
-    this._setDescription();
+    this._description();
   }
 
   calcSpeed() {
@@ -131,14 +135,14 @@ class App {
       },
       draw: false,
     });
-	const iconPng = L.icon({
-            iconUrl: `./assets/imgs/icon.png`,
-            iconSize: [40, 40],
-            iconAnchor: [18, 41],
-            popupAnchor: [0, -41],
-     });
-	 
-	L.Marker.prototype.options.icon = iconPng;
+    const iconPng = L.icon({
+      iconUrl: `./assets/imgs/icon.png`,
+      iconSize: [40, 40],
+      iconAnchor: [18, 41],
+      popupAnchor: [0, -41],
+    });
+
+    L.Marker.prototype.options.icon = iconPng;
 
     // Get user's position
     this._getPosition();
@@ -258,14 +262,15 @@ class App {
     // .then(pos => this._loadMap(pos))
     // .catch(err => alert(err))
 
-
     // async / await version
-    const getPosition = async function() {
-      const pos = await new Promise(function(resolve, reject){
-        navigator.geolocation.getCurrentPosition(resolve, err => reject("Could not get your position"));
-      })
-      this._loadMap(pos)
-    }
+    const getPosition = async function () {
+      const pos = await new Promise(function (resolve, reject) {
+        navigator.geolocation.getCurrentPosition(resolve, (err) =>
+          reject("Could not get your position")
+        );
+      });
+      this._loadMap(pos);
+    };
     getPosition.bind(this)();
   }
 
@@ -452,84 +457,83 @@ class App {
 
       const pointJSON = layer.toGeoJSON();
       pointJSON.id = this.#drawnItems.getLayerId(layer);
-	  
-	  // get weather data from api
-	  this._getJson(`https://www.7timer.info/bin/api.pl?lon=${lng}&lat=${lat}&product=civillight&output=json`)
-	  .then(data => {
-		const weather = data.dataseries[0].weather;
-		
-		// get location data from api
-		this._getJson(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&accept-language=en-US`)
-		.then(data => {
-			const {suburb, country, city} = data.address;
-			console.log(suburb, country, city);
-			// If workout running, create running object
-			  if (inputType.value === "running")
-				workout = new Running(
-				  +inputDistance.value,
-				  +inputDuration.value,
-				  +inputCadence.value,
-				  pointJSON,
-				  weather,
-				  {suburb, country, city}
-				);
 
-			// If workout cycling, create cycling object
-			  if (inputType.value === "cycling")
-				workout = new Cycling(
-				  +inputDistance.value,
-				  +inputDuration.value,
-				  +inputElevation.value,
-				  pointJSON,
-				  weather,
-				  {suburb, country, city}
-				);
+      // get weather data from api
+      this._getJson(
+        `https://www.7timer.info/bin/api.pl?lon=${lng}&lat=${lat}&product=civillight&output=json`
+      )
+        .then((data) => {
+          const weather = data.dataseries[0].weather;
 
-			// Add new object to workout array
-			  this.#workouts.push(workout);
+          // get location data from api
+          this._getJson(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&accept-language=en-US`
+          ).then((data) => {
+            const { suburb, country, city } = data.address;
+            console.log(suburb, country, city);
+            // If workout running, create running object
+            if (inputType.value === "running")
+              workout = new Running(
+                +inputDistance.value,
+                +inputDuration.value,
+                +inputCadence.value,
+                pointJSON,
+                weather,
+                { suburb, country, city }
+              );
 
-			
-			// Render workout on list
-			  this._insertWorkout(form, "afterend", workout);
-			  this.#map.panTo([lat, lng]);
-				
-			this._renderWorkoutMarker(layer, workout);
-			// Set local storage to all workouts
-			this._setLocalStorageWorkout();
-			
-			this._resetForm();
-		});
+            // If workout cycling, create cycling object
+            if (inputType.value === "cycling")
+              workout = new Cycling(
+                +inputDistance.value,
+                +inputDuration.value,
+                +inputElevation.value,
+                pointJSON,
+                weather,
+                { suburb, country, city }
+              );
 
-	  })
-	  .catch(err => alert(err)); 
+            // Add new object to workout array
+            this.#workouts.push(workout);
+
+            // Render workout on list
+            this._insertWorkout(form, "afterend", workout);
+            this.#map.panTo([lat, lng]);
+
+            this._renderWorkoutMarker(layer, workout);
+            // Set local storage to all workouts
+            this._setLocalStorageWorkout();
+
+            this._resetForm();
+          });
+        })
+        .catch((err) => alert(err));
     }
 
     if (e.submitter.classList.contains("form__btn-cancel")) {
       this.#drawnItems.removeLayer(this.#mapEvent.layer);
-	  this._resetForm();
+      this._resetForm();
     }
   }
-  
-  _resetForm(){
-	// Hide form + clear input fields
+
+  _resetForm() {
+    // Hide form + clear input fields
     this._hideForm();
     this._showWorkoutList();
     this.#currentForm = undefined;
     this._setControlDraw(this.#drawControl, this.#disableDraw);
     if (this.#workouts.length === 0) startMsg.style.display = "block";
   }
-  
-  async _getJson(url){
-	try{
-		const res = await fetch(url);
-		const data = await res.json();
-		return data;
-	}
-	catch(err){
-		console.log(err);
-		throw(err);
-	}
-	
+
+  async _getJson(url) {
+    try {
+      const res = await fetch(url);
+      const data = await res.json();
+      return data;
+    } catch (err) {
+      console.log(err);
+      throw err;
+    }
   }
 
   _editWorkout(e) {
@@ -547,7 +551,8 @@ class App {
               +inputDuration.value,
               +inputCadence.value,
               workoutObj.point,
-			  workoutObj.weather
+              workoutObj.weather,
+              workoutObj.address
             );
           } else {
             this.#workouts[workoutIndex] = new Cycling(
@@ -555,7 +560,8 @@ class App {
               +inputDuration.value,
               +inputElevation.value,
               workoutObj.point,
-			  workoutObj.weather
+              workoutObj.weather,
+              workoutObj.address
             );
           }
           this.#workouts[workoutIndex].date = workoutObj.date;
@@ -566,7 +572,6 @@ class App {
           );
           layer.closePopup();
           this.#map.removeLayer(layer);
-
 
           const [lng, lat] =
             this.#workouts[workoutIndex].point.geometry.coordinates;
@@ -815,7 +820,11 @@ class App {
           workout.type === "running"
             ? "<img class='workout__icon-popup' src='./assets/imgs/running.png'/>"
             : "<img class='workout__icon-popup' src='./assets/imgs/cycling.png'/>"
-        } <p class="popup__text">${workout.description}</p> <img class='workout__weather' src='./assets/imgs/${workout.weather}.png'/></div>`
+        } <p class="popup__text">${
+          workout.description
+        }</p> <img class='workout__weather' src='./assets/imgs/${
+          workout.weather
+        }.png'/></div>`
       )
       .openPopup();
   }
@@ -969,7 +978,6 @@ class App {
     workoutsData.forEach((work) => {
       L.geoJson(work.point, {
         onEachFeature: function (feature, layer) {
-         
           const layerMarker = L.marker(layer.getLatLng());
 
           this.#drawnItems.addLayer(layerMarker);
@@ -980,8 +988,8 @@ class App {
               work.duration,
               work.cadence,
               work.point,
-			  work.weather,
-			  work.address
+              work.weather,
+              work.address
             );
 
           if (work.type === "cycling")
@@ -990,12 +998,11 @@ class App {
               work.duration,
               work.elevationGain,
               work.point,
-			  work.weather,
-			  work.address
+              work.weather,
+              work.address
             );
 
           workout.date = work._date;
-          
 
           this.#workouts.push(workout);
           this._renderWorkoutMarker(layerMarker, workout);
