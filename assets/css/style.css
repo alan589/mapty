@@ -84,6 +84,11 @@ body {
   background-color: var(--color-dark--2);
 }
 
+
+.popup__flex {
+	display: flex;
+	align-items: center;
+}
 .workout-hover {
   background-color: #636b73;
 }
@@ -107,9 +112,14 @@ body {
 }
 
 .workout__icon {
-  margin-right: 0.4rem;
   width: 20px;
   height: 20px;
+  margin-right: 5px;
+}
+
+.workout__icon-popup {
+  width: 25px;
+  margin-right: 5px;
 }
 
 .workout__value {
@@ -161,6 +171,11 @@ body {
   top: -11px;
   right: 0;
   font-size: 20px;
+}
+
+.workout__weather {
+	width: 30px;
+	margin-left: 5px;
 }
 
 
