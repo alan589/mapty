@@ -503,7 +503,6 @@ class App {
             this._renderWorkoutMarker(layer, workout);
             // Set local storage to all workouts
             this._setLocalStorageWorkout();
-
             this._resetForm();
           });
         })
