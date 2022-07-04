@@ -471,9 +471,7 @@ class App {
       // Add new object to workout array
       this.#workouts.push(workout);
 
-      // Render workout on map as marker
-      this._renderWorkoutMarker(layer, workout);
-
+    
       // Render workout on list
       this._insertWorkout(form, "afterend", workout);
 
@@ -481,6 +479,17 @@ class App {
       this._setLocalStorageWorkout();
 
       this.#map.panTo([lat, lng]);
+
+      fetch(`http://www.7timer.info/bin/api.pl?lon=${lng}&lat=${lat}&product=civillight&output=json`)
+      .then(res => res.json())
+      .then(data => {
+        console.log(data);
+
+        workout.weather = data.dataseries[0].weather;
+        
+        // Render workout on map as marker
+        this._renderWorkoutMarker(layer, workout);
+      })
     }
 
     if (e.submitter.classList.contains("form__btn-cancel")) {
@@ -782,7 +791,7 @@ class App {
           workout.type === "running"
             ? "<img class='workout__icon' src='./assets/imgs/running.png'/>"
             : "<img class='workout__icon' src='./assets/imgs/cycling.png'/>"
-        } ${workout.description}`
+        } ${workout.description} <img width=30px src='./assets/imgs/${workout.weather}.png'/>`
       )
       .openPopup();
   }
