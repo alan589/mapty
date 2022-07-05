@@ -20,8 +20,8 @@ class Workout {
     let location = !this.address.suburb
       ? this.address.city
       : this.address.suburb;
-    if (location === undefined) location = "";
-    else location += ", ";
+    location = location === undefined ? "" : location + ", ";
+
     this._description = `${
       this.type === "running" ? "Run" : "Cycle"
     } in ${location} ${this.address.country} on ${
@@ -449,6 +449,7 @@ class App {
       if (!this._validInputs()) {
         return;
       }
+      this._resetForm();
 
       const { lat, lng } = this.#mapEvent.layer.getLatLng();
 
@@ -503,7 +504,10 @@ class App {
             this._renderWorkoutMarker(layer, workout);
             // Set local storage to all workouts
             this._setLocalStorageWorkout();
-            this._resetForm();
+
+            // clear input fields
+            this._clearInputs();
+            startMsg.style.display = "none";
           });
         })
         .catch((err) => alert(err));
@@ -516,12 +520,10 @@ class App {
   }
 
   _resetForm() {
-    // Hide form + clear input fields
     this._hideForm();
     this._showWorkoutList();
     this.#currentForm = undefined;
     this._setControlDraw(this.#drawControl, this.#disableDraw);
-    if (this.#workouts.length === 0) startMsg.style.display = "block";
   }
 
   async _getJson(url) {
@@ -688,14 +690,16 @@ class App {
     inputDistance.focus();
   }
 
-  _hideForm() {
+  _clearInputs(){
     // Empty inputs
     inputDistance.value =
       inputDuration.value =
       inputCadence.value =
       inputElevation.value =
-        "";
+      "";
+  }
 
+  _hideForm() {
     form.style.display = "none";
     form.classList.add("hidden");
     setTimeout(() => (form.style.display = "grid"), 300);
