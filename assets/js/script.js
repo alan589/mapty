@@ -866,9 +866,9 @@ class App {
       workout.id
     }" tabindex="0">
         <div class="workout__popup hidden">
-          <p class="edit">Edit</p>
-          <p class="delete">Delete</p>
-          <span class="workout__close">x</span>
+            <p class="edit">Edit</p>
+            <p class="delete">Delete</p>
+            <span class="workout__close">x</span>
         </div>
         <span class="workout__edit">...</span>
         <h2 class="workout__title">${workout.description}</h2>
