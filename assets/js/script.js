@@ -29,6 +29,10 @@ class Workout {
     } ${this._date.getDate()}`;
   }
 
+  set description(description){
+    this._description = description;
+  }
+
   get description() {
     return this._description;
   }
@@ -508,7 +512,8 @@ class App {
             // clear input fields
             this._clearInputs();
             startMsg.style.display = "none";
-          });
+          })
+          .catch((err) => alert(err));
         })
         .catch((err) => alert(err));
     }
@@ -1006,6 +1011,7 @@ class App {
             );
 
           workout.date = work._date;
+          workout.description = work._description;
 
           this.#workouts.push(workout);
           this._renderWorkoutMarker(layerMarker, workout);
