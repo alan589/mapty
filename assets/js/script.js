@@ -16,11 +16,10 @@ class Workout {
 
   _description() {
     // prettier-ignore
-    const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-    let location = !this.address.suburb
-      ? this.address.city
-      : this.address.suburb;
-    location = location === undefined ? "" : location + ", ";
+    const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July',
+    'August', 'September', 'October', 'November', 'December'];
+
+    let location = this.address?.suburb ?? this.address?.city ?? location + ", ";
 
     this._description = `${
       this.type === "running" ? "Run" : "Cycle"
@@ -160,14 +159,8 @@ class App {
 
     confirmForm.addEventListener(
       "click",
-      function (e) {
-        if (e.target.textContent === "Ok") {
-          this._reset();
-        }
-        if (e.target.textContent === "Cancel") {
-          this._hiddenConfirmationForm();
-        }
-      }.bind(this)
+      (e) => e.target.textContent === "Ok" ? this._reset() : this._hiddenConfirmationForm()
+      .bind(this)
     );
 
     fitBtn.addEventListener("click", this._fitWorkouts.bind(this));
@@ -330,20 +323,10 @@ class App {
         `<label><div><span>Maps</span></div></label>`
       );
 
-    const reOpenPoup = (e) =>
+    const reOpenPopup = (e) =>
       this.#drawnItems.getLayers(e).forEach((l) => l.openPopup());
-    this.#map.on("draw:editstop", reOpenPoup);
-    this.#map.on("draw:deletestop", reOpenPoup);
-
-    this.#map.on(
-      "draw:drawstop",
-      function (e) {
-        if (e.layerType === "marker") {
-          if (this.#currentForm !== undefined)
-            this._setControlDraw(this.#disableDraw, this.#drawControl);
-        }
-      }.bind(this)
-    );
+    this.#map.on("draw:editstop", reOpenPopup);
+    this.#map.on("draw:deletestop", reOpenPopup);
 
     this.#map.on(
       L.Draw.Event.CREATED,
@@ -359,6 +342,7 @@ class App {
           this._hidePopups();
           this._hiddenWorkoutList();
           this._showForm();
+          this._setControlDraw(this.#disableDraw, this.#drawControl);
         }
 
         if (event.layerType !== "marker") {
@@ -444,15 +428,13 @@ class App {
     this._getLocalStorageDrawlayers();
   }
 
-  _newWorkout(e) {
+  async _newWorkout(e) {
     e.preventDefault();
 
     if (e.submitter.classList.contains("form__btn-ok")) {
-      let workout;
+      if (!this._validInputs()) return;
 
-      if (!this._validInputs()) {
-        return;
-      }
+      let workout;
       this._resetForm();
 
       const { lat, lng } = this.#mapEvent.layer.getLatLng();
@@ -463,40 +445,39 @@ class App {
       const pointJSON = layer.toGeoJSON();
       pointJSON.id = this.#drawnItems.getLayerId(layer);
 
-      // get weather data from api
-      this._getJson(
-        `https://www.7timer.info/bin/api.pl?lon=${lng}&lat=${lat}&product=civillight&output=json`
-      )
-        .then((data) => {
-          const weather = data.dataseries[0].weather;
+      try 
+        {
+            // get weather data from api
+            const weatherData = await this._getJson(`https://www.7timer.info/bin/api.pl?lon=${lng}&lat=${lat}&product=civillight&output=json`);
 
-          // get location data from api
-          this._getJson(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&accept-language=en-US`
-          ).then((data) => {
-            const { suburb, country, city } = data.address;
+            const weather = weatherData.dataseries[0].weather;
+
+            // get location data from api
+            const locationData = await this._getJson(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&accept-language=en-US`);
+            const { suburb, country, city } = locationData.address;
             console.log(suburb, country, city);
+
             // If workout running, create running object
             if (inputType.value === "running")
-              workout = new Running(
-                +inputDistance.value,
-                +inputDuration.value,
-                +inputCadence.value,
-                pointJSON,
-                weather,
-                { suburb, country, city }
-              );
+                    workout = new Running(
+                      +inputDistance.value,
+                      +inputDuration.value,
+                      +inputCadence.value,
+                      pointJSON,
+                      weather,
+                      { suburb, country, city });
+       
 
             // If workout cycling, create cycling object
             if (inputType.value === "cycling")
-              workout = new Cycling(
-                +inputDistance.value,
-                +inputDuration.value,
-                +inputElevation.value,
-                pointJSON,
-                weather,
-                { suburb, country, city }
-              );
+                    workout = new Cycling(
+                      +inputDistance.value,
+                      +inputDuration.value,
+                      +inputElevation.value,
+                      pointJSON,
+                      weather,
+                      { suburb, country, city }
+                    );
 
             // Add new object to workout array
             this.#workouts.push(workout);
@@ -504,18 +485,18 @@ class App {
             // Render workout on list
             this._insertWorkout(form, "afterend", workout);
             this.#map.panTo([lat, lng]);
-
             this._renderWorkoutMarker(layer, workout);
             // Set local storage to all workouts
             this._setLocalStorageWorkout();
+        }catch(err){
+          alert('Não foi possível obter os dados do API');
+          console.error(err);
+          this.#drawnItems.removeLayer(pointJSON.id);
+        }
 
-            // clear input fields
-            this._clearInputs();
-            startMsg.style.display = "none";
-          })
-          .catch((err) => alert(err));
-        })
-        .catch((err) => alert(err));
+      // clear input fields
+      this._clearInputs();
+      startMsg.style.display = "none";  
     }
 
     if (e.submitter.classList.contains("form__btn-cancel")) {
@@ -824,15 +805,14 @@ class App {
         })
       )
       .setPopupContent(
-        `<div class='popup__flex'>${
-          workout.type === "running"
-            ? "<img class='workout__icon-popup' src='./assets/imgs/running.png'/>"
-            : "<img class='workout__icon-popup' src='./assets/imgs/cycling.png'/>"
-        } <p class="popup__text">${
-          workout.description
-        }</p> <img class='workout__weather' src='./assets/imgs/${
-          workout.weather
-        }.png'/></div>`
+        `<div class='popup__flex'>
+           <img class='workout__icon-popup' src='./assets/imgs/${workout.type}.png'/>
+           <p class="popup__text">
+           ${workout.description}
+           </p> 
+           <img class='workout__weather' src='./assets/imgs/${
+           workout.weather}.png'/>
+        </div>`
       )
       .openPopup();
   }
@@ -878,11 +858,7 @@ class App {
         <span class="workout__edit">...</span>
         <h2 class="workout__title">${workout.description}</h2>
         <div class="workout__details">
-           <span>${
-             workout.type === "running"
-               ? "<img class='workout__icon' src='./assets/imgs/running.png'/>"
-               : "<img class='workout__icon' src='./assets/imgs/cycling.png'/>"
-           }</span> 
+          <span><img class='workout__icon' src='./assets/imgs/${workout.type}.png'/></span> 
           <span class="workout__value">${workout.distance}</span>
           <span class="workout__unit">km</span>
         </div>
