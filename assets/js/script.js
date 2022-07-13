@@ -118,6 +118,15 @@ class App {
       },
     };
 
+    const iconPng = L.icon({
+      iconUrl: `./assets/imgs/icon.png`,
+      iconSize: [40, 40],
+      iconAnchor: [18, 41],
+      popupAnchor: [0, -41],
+    });
+
+    L.Marker.prototype.options.icon = iconPng;
+
     this.#drawnItems = new L.FeatureGroup();
     this.#drawControl = new L.Control.Draw({
       edit: {
@@ -128,6 +137,7 @@ class App {
         polyline: this.#drawOptions,
         polygon: this.#drawOptions,
         rectangle: this.#drawOptions,
+        marker: {icon: iconPng}
       },
     });
 
@@ -138,15 +148,7 @@ class App {
       },
       draw: false,
     });
-    const iconPng = L.icon({
-      iconUrl: `./assets/imgs/icon.png`,
-      iconSize: [40, 40],
-      iconAnchor: [18, 41],
-      popupAnchor: [0, -41],
-    });
-
-    L.Marker.prototype.options.icon = iconPng;
-
+    
     // Get user's position
     this._getPosition();
 
@@ -261,13 +263,18 @@ class App {
 
     // async / await version
     const getPosition = async function () {
-      const pos = await new Promise(function (resolve, reject) {
-        navigator.geolocation.getCurrentPosition(resolve, (err) =>
-          reject("Could not get your position")
-        );
-      });
-      this._loadMap(pos);
-    };
+      try{
+          const pos = await new Promise(function (resolve, reject) {
+            navigator.geolocation.getCurrentPosition(resolve, (err) =>
+              reject("Could not get your position")
+            );
+          });
+          this._loadMap(pos);
+      }
+      catch(err){
+        alert(err);
+      }
+    }
     getPosition.bind(this)();
   }
 
@@ -447,6 +454,7 @@ class App {
 
       try 
         {
+            this._loadSpinner()
             // get weather data from api
             const weatherData = await this._getJson(`https://www.7timer.info/bin/api.pl?lon=${lng}&lat=${lat}&product=civillight&output=json`);
 
@@ -483,6 +491,7 @@ class App {
             this.#workouts.push(workout);
 
             // Render workout on list
+            this._removeSpinner();
             this._insertWorkout(form, "afterend", workout);
             this.#map.panTo([lat, lng]);
             this._renderWorkoutMarker(layer, workout);
@@ -491,6 +500,7 @@ class App {
         }catch(err){
           alert('Não foi possível obter os dados do API');
           console.error(err);
+          this._removeSpinner();
           this.#drawnItems.removeLayer(pointJSON.id);
         }
 
@@ -843,6 +853,17 @@ class App {
 
   _deleteWorkoutList() {
     document.querySelectorAll(".workouts li").forEach((l) => l.remove());
+  }
+
+  _loadSpinner(){
+    let html = `<li class="workout spinner">
+    <img src="./assets/imgs/loading.png">
+    </li>`;
+
+    form.insertAdjacentHTML('afterend', html);
+  }
+  _removeSpinner(){
+    document.querySelector('.workouts li').remove();
   }
 
   _insertWorkout(selector, pos, workout) {
