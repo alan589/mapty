@@ -19,11 +19,11 @@ class Workout {
     const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July',
     'August', 'September', 'October', 'November', 'December'];
 
-    let location = this.address?.suburb ?? this.address?.city ?? location + ", ";
+    let location = this.address?.suburb ?? this.address?.city ?? "";
 
     this._description = `${
       this.type === "running" ? "Run" : "Cycle"
-    } in ${location} ${this.address.country} on ${
+    } in ${location === '' ? '' : location + ', '} ${this.address.country} on ${
       months[this._date.getMonth()]
     } ${this._date.getDate()}`;
   }
@@ -243,24 +243,6 @@ class App {
   }
 
   _getPosition() {
-    // if (navigator.geolocation)
-    //   navigator.geolocation.getCurrentPosition(
-    //     this._loadMap.bind(this),
-    //     function () {
-    //       alert("Could not get your position");
-    //     }
-    //   );
-
-    // promisifying the geolocation
-    // const getPosition = function() {
-    //   return new Promise(function(resolve, reject){
-    //     navigator.geolocation.getCurrentPosition(resolve, err => reject("Could not get your position"));
-    //   })
-    // }
-    // getPosition()
-    // .then(pos => this._loadMap(pos))
-    // .catch(err => alert(err))
-
     // async / await version
     const getPosition = async function () {
       try{
@@ -332,8 +314,8 @@ class App {
 
     const reOpenPopup = (e) =>
       this.#drawnItems.getLayers(e).forEach((l) => l.openPopup());
-    this.#map.on("draw:editstop", reOpenPopup);
-    this.#map.on("draw:deletestop", reOpenPopup);
+
+    ["draw:editstop", "draw:deletestop"].forEach(ev => this.#map.on(ev, reOpenPopup));
 
     this.#map.on(
       L.Draw.Event.CREATED,
@@ -456,14 +438,14 @@ class App {
         {
             this._loadSpinner()
             // get weather data from api
-            const weatherData = await this._getJson(`https://www.7timer.info/bin/api.pl?lon=${lng}&lat=${lat}&product=civillight&output=json`);
-
+            const weatherData = await Promise.race([this._timeout(20), this._getJson(`https://www.7timer.info/bin/api.pl?lon=${lng}&lat=${lat}&product=civillight&output=json`)])
+             
             const weather = weatherData.dataseries[0].weather;
-
+              
             // get location data from api
-            const locationData = await this._getJson(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&accept-language=en-US`);
+            const locationData = await Promise.race([this._timeout(20), this._getJson(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&accept-language=en-US`)]);
             const { suburb, country, city } = locationData.address;
-            console.log(suburb, country, city);
+            console.log(suburb, city, country);
 
             // If workout running, create running object
             if (inputType.value === "running")
@@ -498,7 +480,7 @@ class App {
             // Set local storage to all workouts
             this._setLocalStorageWorkout();
         }catch(err){
-          alert('Não foi possível obter os dados do API');
+          alert(err.message);
           console.error(err);
           this._removeSpinner();
           this.#drawnItems.removeLayer(pointJSON.id);
@@ -528,8 +510,7 @@ class App {
       const data = await res.json();
       return data;
     } catch (err) {
-      console.log(err);
-      throw err;
+      throw new Error(`Não foi possível obter dados do API.\n${err}`);
     }
   }
 
@@ -1038,6 +1019,14 @@ class App {
     this.#drawControl.options.draw.polyline.shapeOptions.color = color;
     this.#drawControl.options.draw.polygon.shapeOptions.color = color;
     this.#drawControl.options.draw.rectangle.shapeOptions.color = color;
+  }
+
+  _timeout(sec) {
+    return new Promise(function (_, reject) {
+      setTimeout(function () {
+        reject(new Error('Request took too long!'));
+      }, sec * 1000);
+    });
   }
 
   get workouts() {

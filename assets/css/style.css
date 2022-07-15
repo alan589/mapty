@@ -79,11 +79,14 @@ body {
 .spinner {
   display: flex;
   justify-content: center;
+  align-items: center;
   height: 90px;
 }
 
 .spinner img {
-  animation: rotate 5s infinite linear;
+  width: 40px;
+  height: 40px;
+  animation: rotate 2s infinite linear;
 }
 
 @keyframes rotate {
