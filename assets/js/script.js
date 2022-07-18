@@ -1,4 +1,41 @@
-"use strict";
+import 'regenerator-runtime/runtime';
+import 'core-js/stable';
+
+
+import * as leaflet from 'leaflet';
+const leafletDraw = require('leaflet-draw');
+
+import icon from 'url:../imgs/icon.png';
+import running from 'url:../imgs/running.png';
+import cycling from 'url:../imgs/cycling.png';
+import loading from 'url:../imgs/loading.png';
+import clock from 'url:../imgs/clock.png';
+import feet from 'url:../imgs/feet.png';
+import elevation from 'url:../imgs/elevation.png';
+import lightning from 'url:../imgs/lightning.png';
+
+import clear from 'url:../imgs/clear.png';
+import cloudy from 'url:../imgs/cloudy.png';
+import ishower from 'url:../imgs/ishower.png';
+import lightrain from 'url:../imgs/lightrain.png';
+import lightsnow from 'url:../imgs/lightsnow.png';
+import mcloudy from 'url:../imgs/mcloudy.png';
+import oshower from 'url:../imgs/oshower.png';
+import pcloudy from 'url:../imgs/pcloudy.png';
+import rain from 'url:../imgs/rain.png';
+import ts from 'url:../imgs/ts.png';
+import tsrain from 'url:../imgs/tsrain.png';
+
+
+
+const assets = {'icon': icon, 'running': running, 
+'cycling': cycling, 'loading': loading, 'clock': clock,
+'feet': feet, 'elevation': elevation, 'lightning': lightning,
+'clear': clear, 'cloudy': cloudy, 'ishower': ishower, 'lightrain': lightrain,
+'lightsnow': lightsnow, 'mcloudy': mcloudy, 'oshower': oshower, 'pcloudy': pcloudy,
+'rain': rain, 'ts': ts, 'tsrain': tsrain};
+
+
 
 class Workout {
   _date = new Date();
@@ -119,7 +156,7 @@ class App {
     };
 
     const iconPng = L.icon({
-      iconUrl: `./assets/imgs/icon.png`,
+      iconUrl: assets['icon'],
       iconSize: [40, 40],
       iconAnchor: [18, 41],
       popupAnchor: [0, -41],
@@ -134,6 +171,7 @@ class App {
       },
       draw: {
         circle: false,
+        circlemarker: false,
         polyline: this.#drawOptions,
         polygon: this.#drawOptions,
         rectangle: this.#drawOptions,
@@ -736,12 +774,12 @@ class App {
     let html = `
         <li class="workout-tooltip">
           <div class="workout__details">
-             <span><img class="tooltip__icon" src="./assets/imgs/${workout.type}.png"></span> 
+             <span><img class="tooltip__icon" src="${assets[workout.type]}"></span> 
             <span class="tooltip__value">${workout.distance}</span>
             <span class="tooltip__unit">km</span>
           </div>
           <div class="workout__details">
-            <span><img class="tooltip__icon" src="./assets/imgs/clock.png"></span>
+            <span><img class="tooltip__icon" src="${assets['clock']}"></span>
             <span class="tooltip__value">${workout.duration}</span>
             <span class="tooltip__unit">min</span>
           </div>
@@ -750,12 +788,12 @@ class App {
     if (workout.type === "running")
       html += `
         <div class="workout__details">
-             <span><img class="tooltip__icon" src="./assets/imgs/lightning.png"></span> 
+             <span><img class="tooltip__icon" src="${assets['lightning']}"></span> 
             <span class="tooltip__value">${workout.pace.toFixed(1)}</span>
             <span class="tooltip__unit">min/km</span>
           </div>
           <div class="workout__details">
-             <span><img class="tooltip__icon" src="./assets/imgs/feet.png"></span> 
+             <span><img class="tooltip__icon" src="${assets['feet']}"></span> 
             <span class="tooltip__value">${workout.cadence}</span>
             <span class="tooltip__unit">spm</span>
           </div>
@@ -765,12 +803,12 @@ class App {
     if (workout.type === "cycling")
       html += `
         <div class="workout__details">
-             <span><img class="tooltip__icon" src="./assets/imgs/lightning.png"></span> 
+             <span><img class="tooltip__icon" src="${assets['lightning']}"></span> 
             <span class="tooltip__value">${workout.speed.toFixed(1)}</span>
             <span class="tooltip__unit">km/h</span>
           </div>
           <div class="workout__details">
-             <span><img class="tooltip__icon" src="./assets/imgs/elevation.png"></span> 
+             <span><img class="tooltip__icon" src="${assets['elevation']}"></span> 
             <span class="tooltip__value">${workout.elevationGain}</span>
             <span class="tooltip__unit">m</span>
           </div>
@@ -797,12 +835,11 @@ class App {
       )
       .setPopupContent(
         `<div class='popup__flex'>
-           <img class='workout__icon-popup' src='./assets/imgs/${workout.type}.png'/>
+           <img class='workout__icon-popup' src='${assets[workout.type]}'/>
            <p class="popup__text">
            ${workout.description}
            </p> 
-           <img class='workout__weather' src='./assets/imgs/${
-           workout.weather}.png'/>
+           <img class='workout__weather' src='${assets[workout.weather]}'/>
         </div>`
       )
       .openPopup();
@@ -838,7 +875,7 @@ class App {
 
   _loadSpinner(){
     let html = `<li class="workout spinner">
-    <img src="./assets/imgs/loading.png">
+    <img src="${assets['loading']}">
     </li>`;
 
     form.insertAdjacentHTML('afterend', html);
@@ -860,12 +897,12 @@ class App {
         <span class="workout__edit">...</span>
         <h2 class="workout__title">${workout.description}</h2>
         <div class="workout__details">
-          <span><img class='workout__icon' src='./assets/imgs/${workout.type}.png'/></span> 
+          <span><img class='workout__icon' src='${assets[workout.type]}'/></span> 
           <span class="workout__value">${workout.distance}</span>
           <span class="workout__unit">km</span>
         </div>
         <div class="workout__details">
-          <span><img class='workout__icon' src='./assets/imgs/clock.png'/></span>
+          <span><img class='workout__icon' src='${assets['clock']}'/></span>
           <span class="workout__value">${workout.duration}</span>
           <span class="workout__unit">min</span>
         </div>
@@ -874,12 +911,12 @@ class App {
     if (workout.type === "running")
       html += `
         <div class="workout__details">
-           <span><img class='workout__icon' src='./assets/imgs/lightning.png'/></span> 
+           <span><img class='workout__icon' src='${assets['lightning']}'/></span> 
           <span class="workout__value">${workout.pace.toFixed(1)}</span>
           <span class="workout__unit">min/km</span>
         </div>
         <div class="workout__details">
-           <span><img class='workout__icon' src='./assets/imgs/feet.png'/></span> 
+           <span><img class='workout__icon' src='${assets['feet']}'/></span> 
           <span class="workout__value">${workout.cadence}</span>
           <span class="workout__unit">spm</span>
         </div>
@@ -889,12 +926,12 @@ class App {
     if (workout.type === "cycling")
       html += `
         <div class="workout__details">
-           <span><img class='workout__icon' src='./assets/imgs/lightning.png'/></span> 
+           <span><img class='workout__icon' src='${assets['lightning']}'/></span> 
           <span class="workout__value">${workout.speed.toFixed(1)}</span>
           <span class="workout__unit">km/h</span>
         </div>
         <div class="workout__details">
-          <span><img class='workout__icon' src='./assets/imgs/elevation.png'/></span>
+          <span><img class='workout__icon' src='${assets['elevation']}'/></span>
           <span class="workout__value">${workout.elevationGain}</span>
           <span class="workout__unit">m</span>
         </div>

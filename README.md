@@ -11,7 +11,7 @@ The application consists of mapping exercises through an interactive map.
 
 ### Links
 
-- Live site: (https://alan589.github.io/mapty/)
+- Live site: (https://mapty-alan.netlify.app/)
 
 ## My process
 
