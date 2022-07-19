@@ -152,7 +152,7 @@ class App {
         color: "#03a9f4",
         weight: 5,
         opacity: 1,
-      },
+      }
     };
 
     const iconPng = L.icon({
