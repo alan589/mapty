@@ -1,7 +1,7 @@
 {
   "name": "mapty",
   "version": "1.0.0",
-  "description": "Web application made during [The Complete JavaScript Course](https://www.udemy.com/course/the-complete-javascript-course/) with some new features implemented by me.",
+  "description": "The application consists of mapping exercises through an interactive map.",
   "scripts": {
     "start": "parcel index.html",
     "build": "parcel build index.html --dist-dir ./dist"

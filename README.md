@@ -1,6 +1,4 @@
 # About
-Web application made during [The Complete JavaScript Course](https://www.udemy.com/course/the-complete-javascript-course/) with some new features implemented by me.
-
 The application consists of mapping exercises through an interactive map.
 
 ## Overview
@@ -56,7 +54,6 @@ Clone this repository:
 
 ```
 git clone git@github.com:alan589/mapty.git
-
 ```
 
 Install npm packages:

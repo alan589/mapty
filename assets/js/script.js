@@ -5,7 +5,7 @@ import 'core-js/stable';
 import * as leaflet from 'leaflet';
 const leafletDraw = require('leaflet-draw');
 
-import icon from 'url:../imgs/icon.png';
+import marker from 'url:../imgs/marker.png';
 import running from 'url:../imgs/running.png';
 import cycling from 'url:../imgs/cycling.png';
 import loading from 'url:../imgs/loading.png';
@@ -28,7 +28,7 @@ import tsrain from 'url:../imgs/tsrain.png';
 
 
 
-const assets = {'icon': icon, 'running': running, 
+const icons = {'marker': marker, 'running': running, 
 'cycling': cycling, 'loading': loading, 'clock': clock,
 'feet': feet, 'elevation': elevation, 'lightning': lightning,
 'clear': clear, 'cloudy': cloudy, 'ishower': ishower, 'lightrain': lightrain,
@@ -149,14 +149,14 @@ class App {
   constructor() {
     this.#drawOptions = {
       shapeOptions: {
-        color: "blue",
+        color: "#03a9f4",
         weight: 5,
         opacity: 1,
       },
     };
 
     const iconPng = L.icon({
-      iconUrl: assets['icon'],
+      iconUrl: icons['marker'],
       iconSize: [40, 40],
       iconAnchor: [18, 41],
       popupAnchor: [0, -41],
@@ -774,12 +774,12 @@ class App {
     let html = `
         <li class="workout-tooltip">
           <div class="workout__details">
-             <span><img class="tooltip__icon" src="${assets[workout.type]}"></span> 
+             <span><img class="tooltip__icon" src="${icons[workout.type]}"></span> 
             <span class="tooltip__value">${workout.distance}</span>
             <span class="tooltip__unit">km</span>
           </div>
           <div class="workout__details">
-            <span><img class="tooltip__icon" src="${assets['clock']}"></span>
+            <span><img class="tooltip__icon" src="${icons['clock']}"></span>
             <span class="tooltip__value">${workout.duration}</span>
             <span class="tooltip__unit">min</span>
           </div>
@@ -788,12 +788,12 @@ class App {
     if (workout.type === "running")
       html += `
         <div class="workout__details">
-             <span><img class="tooltip__icon" src="${assets['lightning']}"></span> 
+             <span><img class="tooltip__icon" src="${icons['lightning']}"></span> 
             <span class="tooltip__value">${workout.pace.toFixed(1)}</span>
             <span class="tooltip__unit">min/km</span>
           </div>
           <div class="workout__details">
-             <span><img class="tooltip__icon" src="${assets['feet']}"></span> 
+             <span><img class="tooltip__icon" src="${icons['feet']}"></span> 
             <span class="tooltip__value">${workout.cadence}</span>
             <span class="tooltip__unit">spm</span>
           </div>
@@ -803,12 +803,12 @@ class App {
     if (workout.type === "cycling")
       html += `
         <div class="workout__details">
-             <span><img class="tooltip__icon" src="${assets['lightning']}"></span> 
+             <span><img class="tooltip__icon" src="${icons['lightning']}"></span> 
             <span class="tooltip__value">${workout.speed.toFixed(1)}</span>
             <span class="tooltip__unit">km/h</span>
           </div>
           <div class="workout__details">
-             <span><img class="tooltip__icon" src="${assets['elevation']}"></span> 
+             <span><img class="tooltip__icon" src="${icons['elevation']}"></span> 
             <span class="tooltip__value">${workout.elevationGain}</span>
             <span class="tooltip__unit">m</span>
           </div>
@@ -835,11 +835,11 @@ class App {
       )
       .setPopupContent(
         `<div class='popup__flex'>
-           <img class='workout__icon-popup' src='${assets[workout.type]}'/>
+           <img class='workout__icon-popup' src='${icons[workout.type]}'/>
            <p class="popup__text">
            ${workout.description}
            </p> 
-           <img class='workout__weather' src='${assets[workout.weather]}'/>
+           <img class='workout__weather' src='${icons[workout.weather]}'/>
         </div>`
       )
       .openPopup();
@@ -875,7 +875,7 @@ class App {
 
   _loadSpinner(){
     let html = `<li class="workout spinner">
-    <img src="${assets['loading']}">
+    <img src="${icons['loading']}">
     </li>`;
 
     form.insertAdjacentHTML('afterend', html);
@@ -897,12 +897,12 @@ class App {
         <span class="workout__edit">...</span>
         <h2 class="workout__title">${workout.description}</h2>
         <div class="workout__details">
-          <span><img class='workout__icon' src='${assets[workout.type]}'/></span> 
+          <span><img class='workout__icon' src='${icons[workout.type]}'/></span> 
           <span class="workout__value">${workout.distance}</span>
           <span class="workout__unit">km</span>
         </div>
         <div class="workout__details">
-          <span><img class='workout__icon' src='${assets['clock']}'/></span>
+          <span><img class='workout__icon' src='${icons['clock']}'/></span>
           <span class="workout__value">${workout.duration}</span>
           <span class="workout__unit">min</span>
         </div>
@@ -911,12 +911,12 @@ class App {
     if (workout.type === "running")
       html += `
         <div class="workout__details">
-           <span><img class='workout__icon' src='${assets['lightning']}'/></span> 
+           <span><img class='workout__icon' src='${icons['lightning']}'/></span> 
           <span class="workout__value">${workout.pace.toFixed(1)}</span>
           <span class="workout__unit">min/km</span>
         </div>
         <div class="workout__details">
-           <span><img class='workout__icon' src='${assets['feet']}'/></span> 
+           <span><img class='workout__icon' src='${icons['feet']}'/></span> 
           <span class="workout__value">${workout.cadence}</span>
           <span class="workout__unit">spm</span>
         </div>
@@ -926,12 +926,12 @@ class App {
     if (workout.type === "cycling")
       html += `
         <div class="workout__details">
-           <span><img class='workout__icon' src='${assets['lightning']}'/></span> 
+           <span><img class='workout__icon' src='${icons['lightning']}'/></span> 
           <span class="workout__value">${workout.speed.toFixed(1)}</span>
           <span class="workout__unit">km/h</span>
         </div>
         <div class="workout__details">
-          <span><img class='workout__icon' src='${assets['elevation']}'/></span>
+          <span><img class='workout__icon' src='${icons['elevation']}'/></span>
           <span class="workout__value">${workout.elevationGain}</span>
           <span class="workout__unit">m</span>
         </div>
