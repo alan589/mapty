@@ -149,7 +149,7 @@ class App {
   constructor() {
     this.#drawOptions = {
       shapeOptions: {
-        color: "red",
+        color: "blue",
         weight: 5,
         opacity: 1,
       },

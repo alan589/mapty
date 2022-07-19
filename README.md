@@ -50,3 +50,24 @@ The application consists of mapping exercises through an interactive map.
 Thanks to [Jonas Schmedtmann](https://github.com/jonasschmedtmann). This project is based on his [mapty project](https://mapty.netlify.app/)
 
 
+## How to run this project
+
+Clone this repository:
+
+```
+git clone git@github.com:alan589/mapty.git
+
+```
+
+Install npm packages:
+
+```
+npm install
+```
+
+Start working:
+
+```
+npm run start
+```
+
