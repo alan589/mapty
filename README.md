@@ -53,7 +53,7 @@ Thanks to [Jonas Schmedtmann](https://github.com/jonasschmedtmann). This project
 Clone this repository:
 
 ```
-git clone git@github.com:alan589/mapty.git
+git clone https://github.com/alan589/mapty.git
 ```
 
 Install npm packages:
