@@ -126,10 +126,16 @@ body {
 }
 
 .workout__title {
-  font-size: 1.7rem;
-  font-weight: 600;
-  grid-column: 1 / -1;
+	grid-column: 1/-1;
+    font-size: 1.7rem;
+    font-weight: 600;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    max-width: 33rem;
 }
+
+
 
 .workout__details {
   display: flex;
